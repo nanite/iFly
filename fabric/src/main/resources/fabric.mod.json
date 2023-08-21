@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "ifly",
+  "version": "${version}",
+  "name": "iFly",
+  "description": "I believe I can fly",
+  "authors": [
+    "Me!"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "Arr",
+  "icon": "assets/ifly/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.nanite.ifly.iFlyFabric"
+    ]
+  },
+  "mixins": [
+    "ifly.mixins.json",
+    "ifly-common.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.19.4",
+    "architectury": ">=8.1.79"
+  }
+}
