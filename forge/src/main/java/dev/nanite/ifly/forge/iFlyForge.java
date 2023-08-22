@@ -1,6 +1,7 @@
-package dev.nanite.ifly;
+package dev.nanite.ifly.forge;
 
 import dev.architectury.platform.forge.EventBuses;
+import dev.nanite.ifly.iFly;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
