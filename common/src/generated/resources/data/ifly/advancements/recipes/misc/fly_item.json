@@ -15,7 +15,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "ifly:fly_recip"
+        "recipe": "ifly:fly_item"
       },
       "trigger": "minecraft:recipe_unlocked"
     }
@@ -28,7 +28,7 @@
   ],
   "rewards": {
     "recipes": [
-      "ifly:fly_recip"
+      "ifly:fly_item"
     ]
   },
   "sends_telemetry_event": false

@@ -1,11 +1,13 @@
 package dev.nanite.ifly;
 
+import dev.architectury.registry.CreativeTabRegistry;
 import dev.nanite.ifly.items.Items;
 import dev.nanite.ifly.trims.FlyTrim;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.armortrim.ArmorTrim;
 
@@ -23,9 +25,11 @@ public class iFly {
 //                        Items.ITEMS.forEach(e -> output.accept(e.get()));
 //                    })
 //            .icon(() -> new ItemStack(Items.FLY_ITEM.get())).build());
+
     
     public static void init() {
         Items.ITEMS.register();
+        CreativeTabRegistry.append(CreativeModeTabs.INGREDIENTS, Items.FLY_ITEM.get());
     }
 
 

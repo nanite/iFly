@@ -1,3 +1,5 @@
-// 1.20.1	2023-08-22T16:50:28.293835	iFly/Recipes
-959cf5c1ed83c2a88d01ff75f1fe879f0de370ad data\ifly\recipes\fly_recip.json
-a3600199d7ff3a360bc51795bd37081bbf67d646 data\ifly\advancements\recipes\misc\fly_recip.json
+// 1.20.1	2023-08-22T20:06:32.6701801	iFly/Recipes
+88e1744b6999a750c0baf4a5d4dacd389394a71e data\ifly\recipes\fly_item_crafting.json
+82b90fd2eceee167ec355fc37858dc7152209a91 data\ifly\advancements\recipes\misc\fly_item.json
+d6cfd43e20292ecc64b997c38b249e6dbccea140 data\ifly\advancements\recipes\transportation\fly_item_crafting.json
+959cf5c1ed83c2a88d01ff75f1fe879f0de370ad data\ifly\recipes\fly_item.json

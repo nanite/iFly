@@ -13,6 +13,8 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeCategory;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 
@@ -41,6 +43,15 @@ public class DataGens implements DataGeneratorEntrypoint {
         @Override
         public void buildRecipes(Consumer<FinishedRecipe> exporter) {
             trimSmithing(exporter, Items.FLY_ITEM.get(),new ResourceLocation(iFly.MOD_ID, "fly_item"));
+            ShapedRecipeBuilder.shaped(RecipeCategory.TRANSPORTATION, Items.FLY_ITEM.get())
+                    .unlockedBy("has_netherstar", has(net.minecraft.world.item.Items.NETHER_STAR))
+                    .pattern("SFS")
+                    .pattern("SWS")
+                    .pattern("FFF")
+                    .define('F', net.minecraft.world.item.Items.FEATHER)
+                    .define('W', net.minecraft.world.item.Items.WITHER_SKELETON_SKULL)
+                    .define('S', net.minecraft.world.item.Items.NETHER_STAR)
+                    .save(exporter, new ResourceLocation(iFly.MOD_ID, "fly_item_crafting"));
         }
     }
 
