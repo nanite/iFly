@@ -16,7 +16,10 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "dev.nanite.ifly.iFlyFabric"
+      "dev.nanite.ifly.iFly::init"
+    ],
+    "fabric-datagen": [
+      "dev.nanite.ifly.fabric.DataGens"
     ]
   },
   "mixins": [

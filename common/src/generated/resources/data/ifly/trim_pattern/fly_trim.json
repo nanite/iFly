@@ -1,0 +1,7 @@
+{
+  "asset_id": "ifly:fly_trim",
+  "description": {
+    "translate": "trim_pattern.ifly.fly_trim"
+  },
+  "template_item": "ifly:fly_item"
+}
