@@ -1,8 +1,15 @@
 package dev.nanite.ifly;
 
+import com.google.common.base.Suppliers;
+import dev.architectury.event.events.common.LifecycleEvent;
+import dev.architectury.platform.Platform;
 import dev.architectury.registry.CreativeTabRegistry;
 import dev.nanite.ifly.items.Items;
 import dev.nanite.ifly.trims.FlyTrim;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -10,8 +17,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.armortrim.ArmorTrim;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Supplier;
 
 public class iFly {
     public static final String MOD_ID = "ifly";
@@ -25,41 +36,56 @@ public class iFly {
 //                        Items.ITEMS.forEach(e -> output.accept(e.get()));
 //                    })
 //            .icon(() -> new ItemStack(Items.FLY_ITEM.get())).build());
-
     
     public static void init() {
         Items.ITEMS.register();
+        LifecycleEvent.SETUP.register(iFly::onSetup);
+    }
+
+    private static void onSetup() {
         CreativeTabRegistry.append(CreativeModeTabs.INGREDIENTS, Items.FLY_ITEM.get());
     }
 
+    static ObjectSet<UUID> alreadyFlying = new ObjectOpenHashSet<>();
+    static ObjectSet<UUID> weMadeFlying = new ObjectOpenHashSet<>();
 
-    public static void canFly(RegistryAccess levelRegistryAccess, Entity entity, ItemStack itemStack, EquipmentSlot equipmentSlot){
-        if (equipmentSlot.isArmor()){
-            if (entity instanceof Player player){
-                Optional<ArmorTrim> trim = ArmorTrim.getTrim(levelRegistryAccess, itemStack);
-                if (trim.isPresent()) {
-                    ArmorTrim armorTrim = trim.get();
-                    if (armorTrim.pattern().is(FlyTrim.FLY_TRIM)) {
-                        player.getAbilities().mayfly = true;
-                        player.onUpdateAbilities();
-                    }
-                }else{
-                    boolean keepFlight = false;
-                    for (ItemStack armourStack : player.getInventory().armor) {
-                        if (armourStack.isEmpty()) continue;
-                        Optional<ArmorTrim> trim1 = ArmorTrim.getTrim(levelRegistryAccess, armourStack);
-                        if (trim1.isEmpty()) continue;
-                        if (trim1.get().pattern().is(FlyTrim.FLY_TRIM)){
-                            keepFlight = true;
-                        }
-                    }
-                    if (!keepFlight){
-                        player.getAbilities().mayfly = false;
-                        player.getAbilities().flying = false;
-                        player.onUpdateAbilities();
-                    }
-                }
+    public static void canFly(RegistryAccess levelRegistryAccess, Entity entity, ItemStack itemStack, @Nullable EquipmentSlot equipmentSlot){
+        if (equipmentSlot != null && !equipmentSlot.isArmor()) {
+            return;
+        }
+
+        if (!(entity instanceof Player player)) {
+            return;
+        }
+
+        // Maintain safe state
+        if (player.getAbilities().mayfly && !weMadeFlying.contains(player.getUUID())) {
+            alreadyFlying.add(player.getUUID());
+        } else if (!player.getAbilities().mayfly && weMadeFlying.contains(player.getUUID())) {
+            alreadyFlying.remove(player.getUUID());
+        }
+
+        boolean playerHasTrim = false;
+        for (ItemStack armourStack : player.getInventory().armor) {
+            if (armourStack.isEmpty()) continue;
+            Optional<ArmorTrim> armorTrim = ArmorTrim.getTrim(levelRegistryAccess, armourStack);
+            if (armorTrim.isEmpty()) continue;
+            if (armorTrim.get().pattern().is(FlyTrim.FLY_TRIM)){
+                playerHasTrim = true;
             }
+        }
+
+        if (playerHasTrim) {
+            weMadeFlying.add(player.getUUID());
+            player.getAbilities().mayfly = true;
+            player.onUpdateAbilities();
+        } else {
+            if (alreadyFlying.contains(player.getUUID()) && !weMadeFlying.contains(player.getUUID())) return;
+
+            weMadeFlying.remove(player.getUUID());
+            player.getAbilities().mayfly = false;
+            player.getAbilities().flying = false;
+            player.onUpdateAbilities();
         }
     }
 }
