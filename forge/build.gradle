@@ -29,12 +29,22 @@ configurations {
 
 repositories{
     maven { url "https://maven.neoforged.net/releases/" }
+    maven {
+        url "https://cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 dependencies {
     forge "net.neoforged:forge:${rootProject.forge_version}"
     // Remove the next line if you don't want to depend on the API
     modApi "dev.architectury:architectury-forge:${rootProject.architectury_version}"
+
+    modRuntimeOnly("curse.maven:mekanism-268560:4807067")
+    modRuntimeOnly("curse.maven:angel-ring-333396:4765486")
+    modRuntimeOnly("curse.maven:curios-309927:4817221")
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
