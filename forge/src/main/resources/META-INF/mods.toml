@@ -1,0 +1,35 @@
+modLoader = "javafml"
+loaderVersion = "[49,)"
+#issueTrackerURL = ""
+license = "ARR"
+
+[[mods]]
+modId = "ifly"
+version = "${version}"
+displayName = "iFly"
+authors = "Gaz, Mikey"
+description = '''
+This mod adds a block that grants whitelisted players within its range the ability to use creative flight
+'''
+#logoFile = ""
+
+[[dependencies.ifly]]
+modId = "forge"
+mandatory = true
+versionRange = "[49,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ifly]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.4,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ifly]]
+modId = "architectury"
+mandatory = true
+versionRange = "[11.0.11,)"
+ordering = "AFTER"
+side = "BOTH"

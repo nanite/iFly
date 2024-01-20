@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "ifly",
+  "version": "${version}",
+  "name": "iFly",
+  "description": "This is an example description! Tell everyone what your mod is about!",
+  "authors": [
+    "Me!"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "ARR",
+  "icon": "",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.wuffs.ifly.IFly::init"
+    ],
+    "client": [
+    ],
+    "fabric-datagen": [
+      "dev.wuffs.ifly.fabric.DataGens"
+    ]
+  },
+  "mixins": [
+    "ifly.mixins.json",
+    "ifly-common.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.20.1",
+    "architectury": ">=11.0.11"
+  }
+}
