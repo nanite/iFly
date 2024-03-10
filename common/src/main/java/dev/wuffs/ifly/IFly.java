@@ -5,6 +5,7 @@ import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import dev.wuffs.ifly.blocks.Blocks;
 import dev.wuffs.ifly.items.Items;
+import dev.wuffs.ifly.network.Network;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -17,6 +18,7 @@ public class IFly {
     public static void init(){
         Blocks.BLOCKS.register();
         Blocks.BLOCKENTITY.register();
+        Network.register();
 
         ClientLifecycleEvent.CLIENT_SETUP.register(IFlyClient::setup);
         Items.ITEMS.register();
