@@ -33,6 +33,9 @@ public class C2SOpenIflyScreen{
         contextSupplier.get().queue(() -> {
             BlockEntity blockEntity = contextSupplier.get().getPlayer().level().getBlockEntity(blockPos);
             if (blockEntity instanceof TbdBlockEntity tbdBlockEntity) {
+                if (tbdBlockEntity.ownerUUID == null || !tbdBlockEntity.ownerUUID.equals(contextSupplier.get().getPlayer().getUUID())) {
+                    return;
+                }
                 List<TbdBlockEntity.StoredPlayers> storedPlayers = tbdBlockEntity.storedPlayers;
                 Network.CHANNEL.sendToPlayer((ServerPlayer) contextSupplier.get().getPlayer(), new S2COpenIflyScreen(blockPos, storedPlayers));
             }

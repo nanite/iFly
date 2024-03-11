@@ -9,6 +9,8 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -32,6 +34,7 @@ public class TbdBlockEntity extends BlockEntity {
 
     public static final AABB DETECT_BOX = Shapes.block().bounds();
     public List<StoredPlayers> storedPlayers = new ArrayList<>();
+    public UUID ownerUUID;
 
     public TbdBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(Blocks.TBDE.get(), blockPos, blockState);
@@ -131,20 +134,24 @@ public class TbdBlockEntity extends BlockEntity {
         super.saveAdditional(compoundTag);
         Tag storePlayersCompound = StoredPlayers.LIST_CODEC.encodeStart(NbtOps.INSTANCE, storedPlayers).getOrThrow(false, RuntimeException::new);
         compoundTag.put("storedPlayers", storePlayersCompound);
+        compoundTag.putUUID("ownerUUID", ownerUUID);
     }
 
     @Override
     public void load(CompoundTag compoundTag) {
         super.load(compoundTag);
         storedPlayers = StoredPlayers.LIST_CODEC.parse(NbtOps.INSTANCE, compoundTag.get("storedPlayers")).getOrThrow(false, RuntimeException::new);
+        ownerUUID = compoundTag.getUUID("ownerUUID");
     }
 
     public record StoredPlayers(
             UUID playerUUID,
+            Component playerName,
             boolean allowed
     ){
         public static final Codec<StoredPlayers> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 UUIDUtil.CODEC.fieldOf("playerUUID").forGetter(StoredPlayers::playerUUID),
+                ComponentSerialization.CODEC.fieldOf("playerName").forGetter(StoredPlayers::playerName),
                 Codec.BOOL.fieldOf("allowed").forGetter(StoredPlayers::allowed)
         ).apply(instance, StoredPlayers::new));
 

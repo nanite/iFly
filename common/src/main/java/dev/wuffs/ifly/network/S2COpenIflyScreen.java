@@ -8,6 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class S2COpenIflyScreen {
@@ -20,7 +21,7 @@ public class S2COpenIflyScreen {
         int size = buf.readInt();
         blockPos = buf.readBlockPos();
         for (int i = 0; i < size; i++) {
-            sp.add(new TbdBlockEntity.StoredPlayers(buf.readUUID(), buf.readBoolean()));
+            sp.add(new TbdBlockEntity.StoredPlayers(buf.readUUID(), buf.readComponent(), buf.readBoolean()));
         }
         storedPlayers = sp;
 
@@ -38,6 +39,7 @@ public class S2COpenIflyScreen {
         for (TbdBlockEntity.StoredPlayers storedPlayer : storedPlayers) {
             // Encode data into the buf
             buf.writeUUID(storedPlayer.playerUUID());
+            buf.writeComponent(storedPlayer.playerName());
             buf.writeBoolean(storedPlayer.allowed());
         }
     }
@@ -46,6 +48,8 @@ public class S2COpenIflyScreen {
         // On receive
         contextSupplier.get().queue(() -> {
             // Handle message
+            UUID playerUUID = contextSupplier.get().getPlayer().getUUID();
+
             new TBDScreen(blockPos, storedPlayers).openGui();
         });
     }
