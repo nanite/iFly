@@ -2,6 +2,8 @@ plugins {
     id "com.github.johnrengelman.shadow" version "8.1.1"
 }
 
+ext.isSnapshot = providers.environmentVariable("SNAPSHOT").map {it == "true"}.getOrElse(false)
+
 architectury {
     platformSetupLoomIde()
     neoForge()
@@ -84,9 +86,9 @@ publishing {
 
     // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
     repositories {
-        if (ENV.NANITE_TOKEN) {
+        if (providers.environmentVariable("NANITE_TOKEN").orNull) {
             maven {
-                url "https://maven.nanite.dev/releases"
+                url "https://maven.nanite.dev/${isSnapshot ? 'snapshots' : 'releases'}"
                 credentials {
                     username = "nanite"
                     password = "${ENV.NANITE_TOKEN}"
