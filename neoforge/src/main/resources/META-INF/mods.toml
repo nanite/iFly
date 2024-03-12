@@ -6,10 +6,10 @@ license = "All rights reserved"
 [[mods]]
 modId = "ifly"
 version = "${version}"
-displayName = "IFly"
+displayName = "Ascension Shard"
 authors = "Gaz"
 description = '''
-Adds a block that grants creative flight within its range
+Adds a block that grants creative flight within its range **WORK IN PROGRESS**
 '''
 #logoFile = ""
 
@@ -30,6 +30,6 @@ side = "BOTH"
 [[dependencies.ifly]]
 modId = "architectury"
 required = true
-versionRange = "[11.1.17,)"
+versionRange = "[11.1.0,)"
 ordering = "AFTER"
 side = "BOTH"

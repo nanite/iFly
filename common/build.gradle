@@ -17,7 +17,7 @@ dependencies {
     modCompileOnly "dev.ftb.mods:ftb-library:${rootProject.ftb_lib_version}"
 }
 
-def ENV = System.getenv()
+sourceSets.main.resources.srcDir 'src/generated/resources'
 
 publishing {
     publications {
@@ -31,10 +31,10 @@ publishing {
     repositories {
         if (providers.environmentVariable("NANITE_TOKEN").orNull) {
             maven {
-                url "https://maven.nanite.dev/${isSnapshot ? 'snapshots' : 'releases'}"
+                url "${maven_url}${isSnapshot ? 'snapshots' : 'releases'}"
                 credentials {
                     username = "nanite"
-                    password = "${ENV.NANITE_TOKEN}"
+                    password = providers.environmentVariable("NANITE_TOKEN").get()
                 }
             }
         }

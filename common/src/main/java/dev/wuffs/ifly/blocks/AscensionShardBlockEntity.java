@@ -52,10 +52,7 @@ public class AscensionShardBlockEntity extends BlockEntity {
         BlockPos pos = entity.worldPosition;
         AABB aabb = DETECT_BOX.move(pos).inflate(RADIUS).setMinY(level.getMinBuildHeight()).setMaxY(level.getMaxBuildHeight());
 
-        List<Player> players = entity.level.getEntitiesOfClass(
-                Player.class,
-                aabb
-        );
+        List<Player> players = entity.level.getEntitiesOfClass(Player.class, aabb);
 
         Set<UUID> playerUUIDs = players.stream().map(Entity::getUUID).collect(Collectors.toSet());
 
@@ -72,9 +69,10 @@ public class AscensionShardBlockEntity extends BlockEntity {
 
 
             // Check if the player is contained in the storedPlayers list
+            boolean wfContains = weMadeFlying.contains(player.getUUID());
+            boolean afContains = alreadyFlying.contains(player.getUUID());
+
             if (!player.getUUID().equals(entity.ownerUUID) && !entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.playerUUID().equals(player.getUUID()))) {
-                boolean afContains = alreadyFlying.contains(player.getUUID());
-                boolean wfContains = weMadeFlying.contains(player.getUUID());
                 if(wfContains && !afContains && containsIflyTag){
                     boolean wasFlying = player.getAbilities().flying;
                     weMadeFlying.add(player.getUUID());
@@ -92,14 +90,14 @@ public class AscensionShardBlockEntity extends BlockEntity {
                 continue;
             }
 
-            if (player.getAbilities().mayfly && !weMadeFlying.contains(player.getUUID())) {
+            if (player.getAbilities().mayfly && !wfContains) {
                 alreadyFlying.add(player.getUUID());
-            } else if (!player.getAbilities().mayfly && weMadeFlying.contains(player.getUUID())) {
+            } else if (!player.getAbilities().mayfly && wfContains) {
                 alreadyFlying.remove(player.getUUID());
                 weMadeFlying.remove(player.getUUID());
             }
 
-            if (!weMadeFlying.contains(player.getUUID()) && !alreadyFlying.contains(player.getUUID())) {
+            if (!wfContains && !afContains) {
                 weMadeFlying.add(player.getUUID());
                 player.addTag("ifly:" + blockPos.toShortString());
                 player.getAbilities().mayfly = true;
@@ -159,7 +157,7 @@ public class AscensionShardBlockEntity extends BlockEntity {
         int ticksPerBlock = initialTicks / initialBlocks;
 
         int resultTicks = ticksPerBlock * fallDistance;
-        System.out.println("It would take " + resultTicks + " ticks to fall " + fallDistance + " blocks with the slow fall effect.");
+//        System.out.println("It would take " + resultTicks + " ticks to fall " + fallDistance + " blocks with the slow fall effect.");
         return resultTicks;
     }
 

@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "ifly",
   "version": "${version}",
-  "name": "iFly",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "Ascension Shard",
+  "description": "**WORK IN PROGRESS** A mods that adds a block which grants the player the ability to fly within a defined range",
   "authors": [
     "Me!"
   ],
