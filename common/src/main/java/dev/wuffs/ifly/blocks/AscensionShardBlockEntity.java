@@ -68,26 +68,38 @@ public class AscensionShardBlockEntity extends BlockEntity {
                 continue;
             }
 
+            boolean containsIflyTag = player.getTags().contains("ifly:" + blockPos.toShortString());
+
+
             // Check if the player is contained in the storedPlayers list
             if (!player.getUUID().equals(entity.ownerUUID) && !entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.playerUUID().equals(player.getUUID()))) {
+                boolean afContains = alreadyFlying.contains(player.getUUID());
+                boolean wfContains = weMadeFlying.contains(player.getUUID());
+                if(wfContains && !afContains && containsIflyTag){
+                    boolean wasFlying = player.getAbilities().flying;
+                    weMadeFlying.add(player.getUUID());
+                    player.removeTag("ifly:" + blockPos.toShortString());
+                    player.getAbilities().flying = false;
+                    player.getAbilities().mayfly = false;
+                    player.onUpdateAbilities();
+                    double distanceToGround = getDistanceToGround(player);
+                    if (distanceToGround >= 4 && wasFlying) {
+                        int timeToFall = fallTimeCalc((int) Math.ceil(distanceToGround));
+                        player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, timeToFall));
+                    }
+                    player.onUpdateAbilities();
+                }
                 continue;
             }
 
-//            System.out.println("We made flying: " + weMadeFlying);
-//            System.out.println("Already flying: " + alreadyFlying);
-
-            // TODO MAKE SURE THIS IS CORRECT
             if (player.getAbilities().mayfly && !weMadeFlying.contains(player.getUUID())) {
-//                System.out.println(player.getDisplayName().getString() + " is already flying");
                 alreadyFlying.add(player.getUUID());
             } else if (!player.getAbilities().mayfly && weMadeFlying.contains(player.getUUID())) {
-//                System.out.println(player.getDisplayName().getString() + " removed from flaying");
                 alreadyFlying.remove(player.getUUID());
                 weMadeFlying.remove(player.getUUID());
             }
 
             if (!weMadeFlying.contains(player.getUUID()) && !alreadyFlying.contains(player.getUUID())) {
-//                System.out.println(player.getDisplayName().getString() + " may fly");
                 weMadeFlying.add(player.getUUID());
                 player.addTag("ifly:" + blockPos.toShortString());
                 player.getAbilities().mayfly = true;
@@ -96,16 +108,11 @@ public class AscensionShardBlockEntity extends BlockEntity {
         }
 
         for (Player player : nonSelectedPlayers) {
-            boolean contains = player.getTags().contains("ifly:" + blockPos.toShortString());
-//            System.out.println("Player " + player.getDisplayName().getString() + " contains tag: " + contains);
-//            System.out.println(player.getTags());
-            if (alreadyFlying.contains(player.getUUID()) || !weMadeFlying.contains(player.getUUID()) || player.isCreative() || player.isSpectator() || !contains) {
-//                System.out.println(player.getDisplayName().getString() + " is already flying/creative or we didnt make them fly");
+            boolean containsIflyTag = player.getTags().contains("ifly:" + blockPos.toShortString());
+            if (alreadyFlying.contains(player.getUUID()) || !weMadeFlying.contains(player.getUUID()) || player.isCreative() || player.isSpectator() || !containsIflyTag) {
                 continue;
-
             }
 
-//            System.out.println(player.getDisplayName().getString() + " may no-longer fly");
             weMadeFlying.remove(player.getUUID());
             boolean wasFlying = player.getAbilities().flying;
             player.getAbilities().mayfly = false;
@@ -121,7 +128,6 @@ public class AscensionShardBlockEntity extends BlockEntity {
     }
 
 
-
     @Override
     protected void saveAdditional(CompoundTag compoundTag) {
         super.saveAdditional(compoundTag);
@@ -133,19 +139,8 @@ public class AscensionShardBlockEntity extends BlockEntity {
     @Override
     public void load(CompoundTag compoundTag) {
         super.load(compoundTag);
-        storedPlayers = StoredPlayers.LIST_CODEC.parse(NbtOps.INSTANCE, compoundTag.get("storedPlayers")).getOrThrow(false, RuntimeException::new);
+        storedPlayers = new ArrayList<>(StoredPlayers.LIST_CODEC.parse(NbtOps.INSTANCE, compoundTag.get("storedPlayers")).getOrThrow(false, RuntimeException::new));
         ownerUUID = compoundTag.getUUID("ownerUUID");
-    }
-
-    public static boolean isPlayerWithinArea(Player player, BlockPos blockPos, double radius) {
-        var playerX = player.getX();
-        var playerZ = player.getZ();
-
-        var blockX = blockPos.getX();
-        var blockZ = blockPos.getZ();
-
-        return playerX >= blockX - radius && playerX <= blockX + radius && playerZ >= blockZ - radius && playerZ <= blockZ + radius;
-
     }
 
     public static double getDistanceToGround(Player player) {
@@ -172,7 +167,7 @@ public class AscensionShardBlockEntity extends BlockEntity {
             UUID playerUUID,
             Component playerName,
             boolean allowed
-    ){
+    ) {
         public static final Codec<StoredPlayers> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 UUIDUtil.CODEC.fieldOf("playerUUID").forGetter(StoredPlayers::playerUUID),
                 ComponentSerialization.CODEC.fieldOf("playerName").forGetter(StoredPlayers::playerName),

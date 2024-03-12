@@ -128,7 +128,7 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
         super.drawForeground(graphics, theme, x, y, w, h);
         theme.drawString(graphics, "Player Manager", x + w / 2, y + 7, SNOW_STORM_1, Theme.CENTERED);
         theme.drawString(graphics, "Whitelisted Players", x + w / 4, y + 27, SNOW_STORM_1, Theme.CENTERED);
-        theme.drawString(graphics, "Online Players", (x + w / 2) + Minecraft.getInstance().font.width("Online Players"), y + 27, SNOW_STORM_1, 0);
+        theme.drawString(graphics, "Online Players", (x + w - (w / 2)) + (w / 4) - (Minecraft.getInstance().font.width("Online Players") / 2), y + 27, SNOW_STORM_1, 0);
     }
 
     @Override
