@@ -4,6 +4,8 @@ plugins {
     id "me.modmuss50.mod-publish-plugin" version "0.4.5"
 }
 
+ext.isSnapshot = providers.environmentVariable("SNAPSHOT").map { it == "true" }.getOrElse(false)
+
 architectury {
     minecraft = rootProject.minecraft_version
 }
@@ -33,7 +35,8 @@ allprojects {
         archivesName = rootProject.archives_base_name
     }
 
-    version = rootProject.mod_version
+    archivesBaseName = rootProject.archives_base_name
+    version = "${mod_version}+mc${minecraft_version}${isSnapshot ? '-SNAPSHOT' : ''}"
     group = rootProject.maven_group
 
     repositories {

@@ -9,6 +9,21 @@ architectury {
 
 loom {
     accessWidenerPath = project(":common").loom.accessWidenerPath
+
+    runs{
+        data {
+            inherit client
+            setConfigName("Fabric Data")
+            ideConfigGenerated(true)
+
+            vmArg("-Dfabric-api.datagen")
+            vmArg("-Dfabric-api.datagen.output-dir=${project(":common").file("src/generated/resources")}")
+            vmArg("-Dfabric-api.datagen.modid=ifly")
+
+            runDir "build/datagen"
+
+        }
+    }
 }
 
 configurations {
@@ -50,6 +65,12 @@ remapJar {
     injectAccessWidener = true
     input.set shadowJar.archiveFile
     dependsOn shadowJar
+    archiveBaseName.set "${rootProject.archives_base_name}-${project.name}"
+    setArchiveClassifier(null)
+}
+
+jar {
+    setArchiveClassifier("dev")
 }
 
 sourcesJar {
@@ -64,6 +85,8 @@ components.java {
     }
 }
 
+def ENV = System.getenv()
+
 publishing {
     publications {
         mavenFabric(MavenPublication) {
@@ -74,6 +97,14 @@ publishing {
 
     // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
     repositories {
-        // Add repositories to publish to here.
+        if (ENV.NANITE_TOKEN) {
+            maven {
+                url "https://maven.nanite.dev/releases"
+                credentials {
+                    username = "nanite"
+                    password = "${ENV.NANITE_TOKEN}"
+                }
+            }
+        }
     }
 }

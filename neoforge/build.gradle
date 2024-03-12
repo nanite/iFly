@@ -46,12 +46,18 @@ shadowJar {
     exclude "architectury.common.json"
 
     configurations = [project.configurations.shadowCommon]
-    archiveClassifier = "dev-shadow"
+    setArchiveClassifier("dev-shadow")
 }
 
 remapJar {
     input.set shadowJar.archiveFile
     dependsOn shadowJar
+    archiveBaseName.set "${rootProject.archives_base_name}-${project.name}"
+    setArchiveClassifier(null)
+}
+
+jar {
+    setArchiveClassifier("dev")
 }
 
 sourcesJar {
