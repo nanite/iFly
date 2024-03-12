@@ -32,9 +32,13 @@ import java.util.stream.Collectors;
 
 public class TbdBlockEntity extends BlockEntity {
 
-    public static final AABB DETECT_BOX = Shapes.block().bounds();
+    public static final AABB DETECT_BOX = Shapes.block().bounds();// TODO make config and upgrade modules
+    public static final double RADIUS = 16D;
     public List<StoredPlayers> storedPlayers = new ArrayList<>();
     public UUID ownerUUID;
+
+    public static ObjectSet<UUID> alreadyFlying = new ObjectOpenHashSet<>();
+    public static ObjectSet<UUID> weMadeFlying = new ObjectOpenHashSet<>();
 
     public TbdBlockEntity(BlockPos blockPos, BlockState blockState) {
         super(Blocks.TBDE.get(), blockPos, blockState);
@@ -46,8 +50,7 @@ public class TbdBlockEntity extends BlockEntity {
         }
 
         BlockPos pos = entity.worldPosition;
-        double radius = 16D; // TODO make config and upgrade modules
-        AABB aabb = DETECT_BOX.move(pos).inflate(radius);
+        AABB aabb = DETECT_BOX.move(pos).inflate(RADIUS).setMinY(level.getMinBuildHeight()).setMaxY(level.getMaxBuildHeight());
 
         List<Player> players = entity.level.getEntitiesOfClass(
                 Player.class,
@@ -61,43 +64,54 @@ public class TbdBlockEntity extends BlockEntity {
                 .collect(Collectors.toList());
 
         for (Player player : players) {
-            if (player == null || player.isCreative()) {
+            if (player == null || player.isCreative() || player.isSpectator()) {
                 continue;
             }
-            System.out.println(weMadeFlying);
-            System.out.println(alreadyFlying);
+
+            // Check if the player is contained in the storedPlayers list
+            if (!player.getUUID().equals(entity.ownerUUID) && !entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.playerUUID().equals(player.getUUID()))) {
+                continue;
+            }
+
+//            System.out.println("We made flying: " + weMadeFlying);
+//            System.out.println("Already flying: " + alreadyFlying);
 
             // TODO MAKE SURE THIS IS CORRECT
             if (player.getAbilities().mayfly && !weMadeFlying.contains(player.getUUID())) {
-                System.out.println(player.getDisplayName().getString() + " is already flying");
+//                System.out.println(player.getDisplayName().getString() + " is already flying");
                 alreadyFlying.add(player.getUUID());
             } else if (!player.getAbilities().mayfly && weMadeFlying.contains(player.getUUID())) {
-                System.out.println("You are removed from flaying");
+//                System.out.println(player.getDisplayName().getString() + " removed from flaying");
                 alreadyFlying.remove(player.getUUID());
                 weMadeFlying.remove(player.getUUID());
             }
 
             if (!weMadeFlying.contains(player.getUUID()) && !alreadyFlying.contains(player.getUUID())) {
-                System.out.println("Your may fly");
+//                System.out.println(player.getDisplayName().getString() + " may fly");
                 weMadeFlying.add(player.getUUID());
+                player.addTag("ifly:" + blockPos.toShortString());
                 player.getAbilities().mayfly = true;
                 player.onUpdateAbilities();
             }
         }
 
         for (Player player : nonSelectedPlayers) {
-            if (alreadyFlying.contains(player.getUUID()) || !weMadeFlying.contains(player.getUUID()) || player.isCreative()) {
-                System.out.println("Player is already flying/creative or we didnt make them fly");
+            boolean contains = player.getTags().contains("ifly:" + blockPos.toShortString());
+//            System.out.println("Player " + player.getDisplayName().getString() + " contains tag: " + contains);
+//            System.out.println(player.getTags());
+            if (alreadyFlying.contains(player.getUUID()) || !weMadeFlying.contains(player.getUUID()) || player.isCreative() || player.isSpectator() || !contains) {
+//                System.out.println(player.getDisplayName().getString() + " is already flying/creative or we didnt make them fly");
                 continue;
+
             }
 
-            System.out.println("Your not allowed to fly anymore");
+//            System.out.println(player.getDisplayName().getString() + " may no-longer fly");
             weMadeFlying.remove(player.getUUID());
             boolean wasFlying = player.getAbilities().flying;
             player.getAbilities().mayfly = false;
             player.getAbilities().flying = false;
+            player.removeTag("ifly:" + blockPos.toShortString());
             double distanceToGround = getDistanceToGround(player);
-            System.out.println(distanceToGround);
             if (distanceToGround >= 4 && wasFlying) {
                 int timeToFall = fallTimeCalc((int) Math.ceil(distanceToGround));
                 player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, timeToFall));
@@ -106,8 +120,33 @@ public class TbdBlockEntity extends BlockEntity {
         }
     }
 
-    static ObjectSet<UUID> alreadyFlying = new ObjectOpenHashSet<>();
-    static ObjectSet<UUID> weMadeFlying = new ObjectOpenHashSet<>();
+
+
+    @Override
+    protected void saveAdditional(CompoundTag compoundTag) {
+        super.saveAdditional(compoundTag);
+        Tag storePlayersCompound = StoredPlayers.LIST_CODEC.encodeStart(NbtOps.INSTANCE, storedPlayers).getOrThrow(false, RuntimeException::new);
+        compoundTag.put("storedPlayers", storePlayersCompound);
+        compoundTag.putUUID("ownerUUID", ownerUUID);
+    }
+
+    @Override
+    public void load(CompoundTag compoundTag) {
+        super.load(compoundTag);
+        storedPlayers = StoredPlayers.LIST_CODEC.parse(NbtOps.INSTANCE, compoundTag.get("storedPlayers")).getOrThrow(false, RuntimeException::new);
+        ownerUUID = compoundTag.getUUID("ownerUUID");
+    }
+
+    public static boolean isPlayerWithinArea(Player player, BlockPos blockPos, double radius) {
+        var playerX = player.getX();
+        var playerZ = player.getZ();
+
+        var blockX = blockPos.getX();
+        var blockZ = blockPos.getZ();
+
+        return playerX >= blockX - radius && playerX <= blockX + radius && playerZ >= blockZ - radius && playerZ <= blockZ + radius;
+
+    }
 
     public static double getDistanceToGround(Player player) {
         Vec3 playerLocation = player.position();
@@ -127,21 +166,6 @@ public class TbdBlockEntity extends BlockEntity {
         int resultTicks = ticksPerBlock * fallDistance;
         System.out.println("It would take " + resultTicks + " ticks to fall " + fallDistance + " blocks with the slow fall effect.");
         return resultTicks;
-    }
-
-    @Override
-    protected void saveAdditional(CompoundTag compoundTag) {
-        super.saveAdditional(compoundTag);
-        Tag storePlayersCompound = StoredPlayers.LIST_CODEC.encodeStart(NbtOps.INSTANCE, storedPlayers).getOrThrow(false, RuntimeException::new);
-        compoundTag.put("storedPlayers", storePlayersCompound);
-        compoundTag.putUUID("ownerUUID", ownerUUID);
-    }
-
-    @Override
-    public void load(CompoundTag compoundTag) {
-        super.load(compoundTag);
-        storedPlayers = StoredPlayers.LIST_CODEC.parse(NbtOps.INSTANCE, compoundTag.get("storedPlayers")).getOrThrow(false, RuntimeException::new);
-        ownerUUID = compoundTag.getUUID("ownerUUID");
     }
 
     public record StoredPlayers(

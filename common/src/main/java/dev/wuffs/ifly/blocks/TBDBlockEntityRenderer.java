@@ -15,8 +15,10 @@ public class TBDBlockEntityRenderer implements BlockEntityRenderer<TbdBlockEntit
     public TBDBlockEntityRenderer(BlockEntityRendererProvider.Context context){
 
     }
+
     @Override
     public void render(TbdBlockEntity blockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j) {
-        LevelRenderer.renderLineBox(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.LINES), new AABB(BlockPos.ZERO).inflate(16D), 1,0.5f,1,1);
+        AABB aabb = new AABB(BlockPos.ZERO).inflate(TbdBlockEntity.RADIUS).setMinY(blockEntity.getLevel().getMinBuildHeight()).setMaxY(blockEntity.getLevel().getMaxBuildHeight());
+        LevelRenderer.renderLineBox(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.LINES), aabb, 1,0.5f,1,1);
     }
 }

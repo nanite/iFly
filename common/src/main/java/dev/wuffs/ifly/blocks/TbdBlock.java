@@ -5,6 +5,8 @@ import dev.wuffs.ifly.network.Network;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -17,6 +19,11 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
+
+import static dev.wuffs.ifly.blocks.TbdBlockEntity.fallTimeCalc;
+import static dev.wuffs.ifly.blocks.TbdBlockEntity.getDistanceToGround;
 
 public class TbdBlock extends Block implements EntityBlock {
 
@@ -47,6 +54,37 @@ public class TbdBlock extends Block implements EntityBlock {
             tbdBlockEntity.ownerUUID = livingEntity.getUUID();
             tbdBlockEntity.setChanged();
         }
+    }
+
+    @Override
+    public void onRemove(BlockState blockState, Level level, BlockPos blockPos, BlockState blockState2, boolean bl) {
+        if (level.isClientSide) {
+            super.onRemove(blockState, level, blockPos, blockState2, bl);
+            return;
+        }
+        BlockEntity blockEntity = level.getBlockEntity(blockPos);
+        if (blockEntity instanceof TbdBlockEntity) {
+            for (UUID playerUUID : TbdBlockEntity.weMadeFlying) {
+                Player player = level.getPlayerByUUID(playerUUID);
+                if (player != null) {
+                    String playerIflyTag = "ifly:" + blockPos.toShortString();
+                    if (player.getTags().contains(playerIflyTag)) {
+                        TbdBlockEntity.weMadeFlying.remove(playerUUID);
+                        boolean wasFlying = player.getAbilities().flying;
+                        player.getAbilities().flying = false;
+                        player.getAbilities().mayfly = false;
+                        player.removeTag("ifly:" + blockPos.toShortString());
+                        double distanceToGround = getDistanceToGround(player);
+                        if (distanceToGround >= 4 && wasFlying) {
+                            int timeToFall = fallTimeCalc((int) Math.ceil(distanceToGround));
+                            player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, timeToFall));
+                        }
+                        player.onUpdateAbilities();
+                    }
+                }
+            }
+        }
+        super.onRemove(blockState, level, blockPos, blockState2, bl);
     }
 
     @Override

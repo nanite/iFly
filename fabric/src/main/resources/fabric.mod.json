@@ -19,6 +19,7 @@
       "dev.wuffs.ifly.IFly::init"
     ],
     "client": [
+      "dev.wuffs.ifly.client.IFlyClient::setup"
     ],
     "fabric-datagen": [
       "dev.wuffs.ifly.fabric.DataGens"

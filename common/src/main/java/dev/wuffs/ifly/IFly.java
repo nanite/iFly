@@ -1,6 +1,5 @@
 package dev.wuffs.ifly;
 
-import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import dev.wuffs.ifly.blocks.Blocks;
@@ -10,7 +9,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import dev.wuffs.ifly.client.IFlyClient;
 
 public class IFly {
     public static final String MOD_ID = "ifly";
@@ -20,7 +18,7 @@ public class IFly {
         Blocks.BLOCKENTITY.register();
         Network.register();
 
-        ClientLifecycleEvent.CLIENT_SETUP.register(IFlyClient::setup);
+//        ClientLifecycleEvent.CLIENT_SETUP.register(IFlyClient::setup);
         Items.ITEMS.register();
         CREATIVE_TAB.register();
     }

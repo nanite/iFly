@@ -2,9 +2,12 @@ package dev.wuffs.ifly.network;
 
 import dev.architectury.networking.NetworkManager;
 import dev.wuffs.ifly.blocks.TbdBlockEntity;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.List;
@@ -33,11 +36,13 @@ public class C2SOpenIflyScreen{
         contextSupplier.get().queue(() -> {
             BlockEntity blockEntity = contextSupplier.get().getPlayer().level().getBlockEntity(blockPos);
             if (blockEntity instanceof TbdBlockEntity tbdBlockEntity) {
-                if (tbdBlockEntity.ownerUUID == null || !tbdBlockEntity.ownerUUID.equals(contextSupplier.get().getPlayer().getUUID())) {
+                Player player = contextSupplier.get().getPlayer();
+                if (tbdBlockEntity.ownerUUID == null || !tbdBlockEntity.ownerUUID.equals(player.getUUID())) {
+                    player.displayClientMessage(Component.literal("You are not the owner of this block!").withStyle(ChatFormatting.RED), true);
                     return;
                 }
                 List<TbdBlockEntity.StoredPlayers> storedPlayers = tbdBlockEntity.storedPlayers;
-                Network.CHANNEL.sendToPlayer((ServerPlayer) contextSupplier.get().getPlayer(), new S2COpenIflyScreen(blockPos, storedPlayers));
+                Network.CHANNEL.sendToPlayer((ServerPlayer) player, new S2COpenIflyScreen(blockPos, storedPlayers, tbdBlockEntity.ownerUUID));
             }
         });
     }
