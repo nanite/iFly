@@ -6,7 +6,7 @@ import dev.ftb.mods.ftblibrary.ui.*;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftblibrary.ui.misc.NordColors;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.wuffs.ifly.blocks.TbdBlockEntity;
+import dev.wuffs.ifly.blocks.AscensionShardBlockEntity;
 import dev.wuffs.ifly.network.C2SGUIInteract;
 import dev.wuffs.ifly.network.Network;
 import net.minecraft.ChatFormatting;
@@ -20,7 +20,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.List;
 import java.util.UUID;
 
-public class TBDScreen extends BaseScreen implements NordColors {
+public class AscensionShardScreen extends BaseScreen implements NordColors {
 
     private BlankPanel whitelistedPlayersPanel;
     private PanelScrollBar whitelistedPlayersScroll;
@@ -32,11 +32,11 @@ public class TBDScreen extends BaseScreen implements NordColors {
 
     public BlockPos blockPos;
     public UUID ownerUUID;
-    public List<TbdBlockEntity.StoredPlayers> storedPlayers;
+    public List<AscensionShardBlockEntity.StoredPlayers> storedPlayers;
 
     private static final int scrollWidth = 10;
 
-    public TBDScreen(BlockPos blockPos, List<TbdBlockEntity.StoredPlayers> storedPlayers, UUID ownerUUID) {
+    public AscensionShardScreen(BlockPos blockPos, List<AscensionShardBlockEntity.StoredPlayers> storedPlayers, UUID ownerUUID) {
         super();
         this.blockPos = blockPos;
         this.storedPlayers = storedPlayers;
@@ -93,7 +93,7 @@ public class TBDScreen extends BaseScreen implements NordColors {
         var ownerEntry = getEntry(whitelistedPlayersPanel, ownerByUUID.getDisplayName().getString(), Icons.STAR, this.ownerUUID, false, false);
         whitelistedPlayersPanel.add(ownerEntry);
 
-        for (TbdBlockEntity.StoredPlayers player : storedPlayers) {
+        for (AscensionShardBlockEntity.StoredPlayers player : storedPlayers) {
             var playerEntry = getEntry(whitelistedPlayersPanel, player.playerName().getString(), Icons.REMOVE, player.playerUUID(), false, true);
             whitelistedPlayersPanel.add(playerEntry);
         }
@@ -157,11 +157,11 @@ public class TBDScreen extends BaseScreen implements NordColors {
                         }
                         Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, playerUUID, isAdding));
                         if (isAdding) {
-                            storedPlayers.add(new TbdBlockEntity.StoredPlayers(playerUUID, Component.literal(btnText), isAdding));
+                            storedPlayers.add(new AscensionShardBlockEntity.StoredPlayers(playerUUID, Component.literal(btnText), isAdding));
                         } else {
                             storedPlayers.removeIf(storedPlayer -> storedPlayer.playerUUID().equals(playerUUID));
                         }
-                        TBDScreen.this.refreshWidgets();
+                        AscensionShardScreen.this.refreshWidgets();
                     }
 
                     @Override

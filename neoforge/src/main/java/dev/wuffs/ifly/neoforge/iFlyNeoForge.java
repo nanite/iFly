@@ -13,7 +13,7 @@ public class iFlyNeoForge {
     public iFlyNeoForge(IEventBus modEventBus) {
         IFly.init();
         modEventBus.addListener(this::clientSetup);
-        EnvExecutor.runInEnv(Env.CLIENT, () -> IFlyClient::setup);
+//        EnvExecutor.runInEnv(Env.CLIENT, () -> IFlyClient::setup);
     }
 
     public void clientSetup(final FMLClientSetupEvent event) {

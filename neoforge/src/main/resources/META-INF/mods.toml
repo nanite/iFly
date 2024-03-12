@@ -1,35 +1,35 @@
 modLoader = "javafml"
-loaderVersion = "[47,)"
+loaderVersion = "[1,)"
 #issueTrackerURL = ""
-license = "Insert License Here"
+license = "All rights reserved"
 
 [[mods]]
-modId = "examplemod"
+modId = "ifly"
 version = "${version}"
-displayName = "Example Mod"
-authors = "Me!"
+displayName = "IFly"
+authors = "Gaz"
 description = '''
-This is an example description! Tell everyone what your mod is about!
+Adds a block that grants creative flight within its range
 '''
 #logoFile = ""
 
-[[dependencies.examplemod]]
-modId = "forge"
-mandatory = true
-versionRange = "[47,)"
+[[dependencies.ifly]]
+modId = "neoforge"
+required = true
+versionRange = "[1,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.examplemod]]
+[[dependencies.ifly]]
 modId = "minecraft"
-mandatory = true
-versionRange = "[1.20.1,)"
+required = true
+versionRange = "[1.20.4,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.examplemod]]
+[[dependencies.ifly]]
 modId = "architectury"
-mandatory = true
-versionRange = "[9.1.12,)"
+required = true
+versionRange = "[11.1.17,)"
 ordering = "AFTER"
 side = "BOTH"

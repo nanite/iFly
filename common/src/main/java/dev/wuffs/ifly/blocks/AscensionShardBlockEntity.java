@@ -30,22 +30,22 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class TbdBlockEntity extends BlockEntity {
+public class AscensionShardBlockEntity extends BlockEntity {
 
     public static final AABB DETECT_BOX = Shapes.block().bounds();// TODO make config and upgrade modules
-    public static final double RADIUS = 16D;
+    public static final double RADIUS = 64D;
     public List<StoredPlayers> storedPlayers = new ArrayList<>();
     public UUID ownerUUID;
 
     public static ObjectSet<UUID> alreadyFlying = new ObjectOpenHashSet<>();
     public static ObjectSet<UUID> weMadeFlying = new ObjectOpenHashSet<>();
 
-    public TbdBlockEntity(BlockPos blockPos, BlockState blockState) {
-        super(Blocks.TBDE.get(), blockPos, blockState);
+    public AscensionShardBlockEntity(BlockPos blockPos, BlockState blockState) {
+        super(Blocks.ASHARD_BENTITY.get(), blockPos, blockState);
     }
 
     public static <T extends BlockEntity> void ticker(Level level, BlockPos blockPos, BlockState state, T t) {
-        if (!(t instanceof TbdBlockEntity entity) || level.getGameTime() % 20 != 0 || entity.level == null) {
+        if (!(t instanceof AscensionShardBlockEntity entity) || level.getGameTime() % 20 != 0 || entity.level == null) {
             return;
         }
 

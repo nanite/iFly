@@ -11,7 +11,7 @@ public class Blocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(IFly.MOD_ID, Registries.BLOCK);
     public static final DeferredRegister<BlockEntityType<?>> BLOCKENTITY = DeferredRegister.create(IFly.MOD_ID, Registries.BLOCK_ENTITY_TYPE);
 
-    public static final RegistrySupplier<Block> TBD = BLOCKS.register("tbd", TbdBlock::new);
-    public static final RegistrySupplier<BlockEntityType<TbdBlockEntity>> TBDE = BLOCKENTITY.register("tbd", () -> BlockEntityType.Builder.of(TbdBlockEntity::new, TBD.get()).build(null));
+    public static final RegistrySupplier<Block> ASHARD = BLOCKS.register("ascension_shard", AscensionShardBlock::new);
+    public static final RegistrySupplier<BlockEntityType<AscensionShardBlockEntity>> ASHARD_BENTITY = BLOCKENTITY.register("ascension_shard", () -> BlockEntityType.Builder.of(AscensionShardBlockEntity::new, ASHARD.get()).build(null));
 
 }

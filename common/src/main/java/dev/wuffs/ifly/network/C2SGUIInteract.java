@@ -1,7 +1,7 @@
 package dev.wuffs.ifly.network;
 
 import dev.architectury.networking.NetworkManager;
-import dev.wuffs.ifly.blocks.TbdBlockEntity;
+import dev.wuffs.ifly.blocks.AscensionShardBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
@@ -42,8 +42,8 @@ public class C2SGUIInteract {
         // On receive
         contextSupplier.get().queue(() -> {
             BlockEntity blockEntity = contextSupplier.get().getPlayer().level().getBlockEntity(blockPos);
-            if (blockEntity instanceof TbdBlockEntity tbdBlockEntity) {
-                if (!tbdBlockEntity.ownerUUID.equals(contextSupplier.get().getPlayer().getUUID())) {
+            if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
+                if (!ascensionShardBlockEntity.ownerUUID.equals(contextSupplier.get().getPlayer().getUUID())) {
                     return;
                 }
                 Player playerByUUID = contextSupplier.get().getPlayer().level().getPlayerByUUID(playerUUID);
@@ -51,16 +51,16 @@ public class C2SGUIInteract {
                     return;
                 }
 
-                List<TbdBlockEntity.StoredPlayers> storedPlayers = tbdBlockEntity.storedPlayers;
+                List<AscensionShardBlockEntity.StoredPlayers> storedPlayers = ascensionShardBlockEntity.storedPlayers;
                 if (added) {
                     if (storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.playerUUID().equals(playerUUID))) {
                         return;
                     }
-                    storedPlayers.add(new TbdBlockEntity.StoredPlayers(playerUUID, playerByUUID.getDisplayName(), true));
+                    storedPlayers.add(new AscensionShardBlockEntity.StoredPlayers(playerUUID, playerByUUID.getDisplayName(), true));
                 } else {
                     storedPlayers.removeIf(storedPlayer -> storedPlayer.playerUUID().equals(playerUUID));
                 }
-                tbdBlockEntity.setChanged();
+                ascensionShardBlockEntity.setChanged();
             }
         });
     }

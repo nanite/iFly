@@ -10,15 +10,15 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 
-public class TBDBlockEntityRenderer implements BlockEntityRenderer<TbdBlockEntity> {
+public class AscensionShardEntityRenderer implements BlockEntityRenderer<AscensionShardBlockEntity> {
 
-    public TBDBlockEntityRenderer(BlockEntityRendererProvider.Context context){
+    public AscensionShardEntityRenderer(BlockEntityRendererProvider.Context context){
 
     }
 
     @Override
-    public void render(TbdBlockEntity blockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j) {
-        AABB aabb = new AABB(BlockPos.ZERO).inflate(TbdBlockEntity.RADIUS).setMinY(blockEntity.getLevel().getMinBuildHeight()).setMaxY(blockEntity.getLevel().getMaxBuildHeight());
+    public void render(AscensionShardBlockEntity blockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j) {
+        AABB aabb = new AABB(BlockPos.ZERO).inflate(AscensionShardBlockEntity.RADIUS).setMinY(blockEntity.getLevel().getMinBuildHeight()).setMaxY(blockEntity.getLevel().getMaxBuildHeight());
         LevelRenderer.renderLineBox(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.LINES), aabb, 1,0.5f,1,1);
     }
 }

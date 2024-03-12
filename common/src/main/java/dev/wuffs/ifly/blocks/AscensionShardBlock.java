@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -22,25 +23,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-import static dev.wuffs.ifly.blocks.TbdBlockEntity.fallTimeCalc;
-import static dev.wuffs.ifly.blocks.TbdBlockEntity.getDistanceToGround;
+import static dev.wuffs.ifly.blocks.AscensionShardBlockEntity.fallTimeCalc;
+import static dev.wuffs.ifly.blocks.AscensionShardBlockEntity.getDistanceToGround;
 
-public class TbdBlock extends Block implements EntityBlock {
+public class AscensionShardBlock extends Block implements EntityBlock {
 
-    public TbdBlock() {
-        super(Properties.of());
+    public AscensionShardBlock() {
+        super(Properties.of().strength(0.4f).sound(SoundType.STONE).noOcclusion());
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
-        return new TbdBlockEntity(blockPos, blockState);
+        return new AscensionShardBlockEntity(blockPos, blockState);
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> blockEntityType) {
-        return level.isClientSide() ? null : TbdBlockEntity::ticker;
+        return level.isClientSide() ? null : AscensionShardBlockEntity::ticker;
     }
 
     @Override
@@ -50,9 +51,9 @@ public class TbdBlock extends Block implements EntityBlock {
             return;
         }
         BlockEntity blockEntity = level.getBlockEntity(blockPos);
-        if (blockEntity instanceof TbdBlockEntity tbdBlockEntity) {
-            tbdBlockEntity.ownerUUID = livingEntity.getUUID();
-            tbdBlockEntity.setChanged();
+        if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
+            ascensionShardBlockEntity.ownerUUID = livingEntity.getUUID();
+            ascensionShardBlockEntity.setChanged();
         }
     }
 
@@ -63,13 +64,13 @@ public class TbdBlock extends Block implements EntityBlock {
             return;
         }
         BlockEntity blockEntity = level.getBlockEntity(blockPos);
-        if (blockEntity instanceof TbdBlockEntity) {
-            for (UUID playerUUID : TbdBlockEntity.weMadeFlying) {
+        if (blockEntity instanceof AscensionShardBlockEntity) {
+            for (UUID playerUUID : AscensionShardBlockEntity.weMadeFlying) {
                 Player player = level.getPlayerByUUID(playerUUID);
                 if (player != null) {
                     String playerIflyTag = "ifly:" + blockPos.toShortString();
                     if (player.getTags().contains(playerIflyTag)) {
-                        TbdBlockEntity.weMadeFlying.remove(playerUUID);
+                        AscensionShardBlockEntity.weMadeFlying.remove(playerUUID);
                         boolean wasFlying = player.getAbilities().flying;
                         player.getAbilities().flying = false;
                         player.getAbilities().mayfly = false;

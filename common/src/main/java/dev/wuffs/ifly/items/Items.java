@@ -18,5 +18,5 @@ public class Items {
         return ITEMS.register(id, () -> new BlockItem(b.get(), new Item.Properties()));
     }
 
-    public static final RegistrySupplier<Item> BUNDLE = blockItem("tbd", Blocks.TBD);
+    public static final RegistrySupplier<Item> BUNDLE = blockItem("ascension_shard", Blocks.ASHARD);
 }

@@ -26,8 +26,6 @@
     ]
   },
   "mixins": [
-    "ifly.mixins.json",
-    "ifly-common.mixins.json"
   ],
   "depends": {
     "fabric": "*",
