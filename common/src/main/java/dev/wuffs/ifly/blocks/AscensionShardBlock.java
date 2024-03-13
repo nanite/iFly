@@ -29,7 +29,7 @@ import static dev.wuffs.ifly.blocks.AscensionShardBlockEntity.getDistanceToGroun
 public class AscensionShardBlock extends Block implements EntityBlock {
 
     public AscensionShardBlock() {
-        super(Properties.of().strength(0.4f).sound(SoundType.STONE).noOcclusion());
+        super(Properties.of().strength(0.4f, 3600000.0F).sound(SoundType.STONE).noOcclusion());
     }
 
     @Nullable
@@ -54,6 +54,13 @@ public class AscensionShardBlock extends Block implements EntityBlock {
         if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
             ascensionShardBlockEntity.ownerUUID = livingEntity.getUUID();
             ascensionShardBlockEntity.setChanged();
+        }
+    }
+
+    @Override
+    public void playerDestroy(Level level, Player player, BlockPos blockPos, BlockState blockState, @Nullable BlockEntity blockEntity, ItemStack itemStack) {
+        if (blockEntity != null && ((AscensionShardBlockEntity) blockEntity).ownerUUID.equals(player.getUUID())) {
+            super.playerDestroy(level, player, blockPos, blockState, blockEntity, itemStack);
         }
     }
 

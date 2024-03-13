@@ -51,9 +51,6 @@ public class S2COpenIflyScreen {
     public void apply(Supplier<NetworkManager.PacketContext> contextSupplier) {
         // On receive
         contextSupplier.get().queue(() -> {
-            // Handle message
-            UUID playerUUID = contextSupplier.get().getPlayer().getUUID();
-
             new AscensionShardScreen(blockPos, storedPlayers, ownerUUID).openGui();
         });
     }
