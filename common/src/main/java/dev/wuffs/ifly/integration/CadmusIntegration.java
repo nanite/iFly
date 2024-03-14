@@ -1,2 +1,4 @@
-package dev.wuffs.ifly.integration;public class CadmusIntegration {
+package dev.wuffs.ifly.integration;
+
+public class CadmusIntegration {
 }

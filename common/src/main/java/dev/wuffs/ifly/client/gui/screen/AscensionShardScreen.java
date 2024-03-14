@@ -1,14 +1,16 @@
 package dev.wuffs.ifly.client.gui.screen;
 
-import dev.ftb.mods.ftblibrary.icon.Icon;
+import com.mojang.authlib.GameProfile;
+import dev.ftb.mods.ftblibrary.icon.FaceIcon;
 import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.*;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftblibrary.ui.misc.NordColors;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.wuffs.ifly.blocks.AscensionShardBlockEntity;
 import dev.wuffs.ifly.network.C2SGUIInteract;
 import dev.wuffs.ifly.network.Network;
+import dev.wuffs.ifly.network.records.AvailablePlayer;
+import dev.wuffs.ifly.network.records.StoredPlayers;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,14 +31,15 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
 
     public BlockPos blockPos;
     public UUID ownerUUID;
-    public List<AscensionShardBlockEntity.StoredPlayers> storedPlayers;
+    public List<UUID> managersUUID;
+    public List<StoredPlayers> storedPlayers;
+    public List<AvailablePlayer> availablePlayers;
 
-    private static final int scrollWidth = 10;
-
-    public AscensionShardScreen(BlockPos blockPos, List<AscensionShardBlockEntity.StoredPlayers> storedPlayers, UUID ownerUUID) {
+    public AscensionShardScreen(BlockPos blockPos, List<StoredPlayers> storedPlayers, List<AvailablePlayer> availablePlayers, UUID ownerUUID) {
         super();
         this.blockPos = blockPos;
         this.storedPlayers = storedPlayers;
+        this.availablePlayers = availablePlayers;
         this.ownerUUID = ownerUUID;
     }
 
@@ -71,8 +75,9 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
         add(addButton = new SimpleButton(this, Component.literal("Add"), Icons.ADD.withTint(SNOW_STORM_2), (simpleButton, mouseButton) -> closeGui()) {
             @Override
             public void onClicked(MouseButton button) {
-                new AddPlayerScreen(Component.literal("Add Player(s)"), storedPlayers, blockPos, ownerUUID).openGui();
+                new AddPlayerScreen(storedPlayers, availablePlayers, blockPos, ownerUUID).openGui();
             }
+
             @Override
             public void draw(GuiGraphics graphics, Theme theme, int x, int y, int w, int h) {
                 drawIcon(graphics, theme, x, y, w, h);
@@ -86,15 +91,15 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
             }
         };
 
-        Player ownerByUUID = Minecraft.getInstance().level.getPlayerByUUID(this.ownerUUID);
-        var ownerEntry = getEntry(whitelistedPlayersPanel, ownerByUUID.getDisplayName().getString(), Icons.STAR, this.ownerUUID, false, false);
+        GameProfile ownerByUUID = Minecraft.getInstance().level.getPlayerByUUID(this.ownerUUID).getGameProfile();
+        var ownerEntry = getEntry(whitelistedPlayersPanel, ownerByUUID, false);
         whitelistedPlayersPanel.add(ownerEntry);
 
-        for (int i = 0; i < 30; i++) {
-            for (AscensionShardBlockEntity.StoredPlayers player : storedPlayers) {
-                var playerEntry = getEntry(whitelistedPlayersPanel, player.playerName().getString(), Icons.REMOVE, player.playerUUID(), false, true);
-                whitelistedPlayersPanel.add(playerEntry);
-            }
+//        for (int i = 0; i < 30; i++) {
+        for (StoredPlayers player : storedPlayers) {
+            var playerEntry = getEntry(whitelistedPlayersPanel, player.player(), true);
+            whitelistedPlayersPanel.add(playerEntry);
+//            }
         }
 
 
@@ -116,24 +121,40 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
         POLAR_NIGHT_0.draw(graphics, x + whitelistedPlayersPanel.posX, y + whitelistedPlayersPanel.posY, whitelistedPlayersPanel.width, whitelistedPlayersPanel.height);
     }
 
-    private BlankPanel getEntry(Panel panel, String btnText, Icon icon, UUID playerUUID, boolean isAdding, boolean isEnabled) {
+    private BlankPanel getEntry(Panel panel, GameProfile profile, boolean isEnabled) {
         var playerEntry = new BlankPanel(panel) {
 
             @Override
             public void addWidgets() {
-                SimpleTextButton playerBtn = new NordButton(this, Component.literal(btnText), icon) {
+                SimpleTextButton playerBtn = new NordButton(this, Component.literal(profile.getName()), FaceIcon.getFace(profile)) {
                     @Override
                     public void onClicked(MouseButton button) {
                         if (!isEnabled) {
                             return;
                         }
-                        Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, playerUUID, isAdding));
-                        if (isAdding) {
-                            storedPlayers.add(new AscensionShardBlockEntity.StoredPlayers(playerUUID, Component.literal(btnText), isAdding));
-                        } else {
-                            storedPlayers.removeIf(storedPlayer -> storedPlayer.playerUUID().equals(playerUUID));
+                        List<ContextMenuItem> contextMenuItems = new ArrayList<>();
+                        if (!profile.getId().equals(ownerUUID)) {
+                            contextMenuItems.add(new ContextMenuItem(Component.literal("Make owner"), Icons.DIAMOND, (b) -> {
+                                System.out.println("Make owner: " + profile.getName());
+                            }));
+                            contextMenuItems.add(new ContextMenuItem(Component.literal("Make manger"), Icons.SHIELD, (b) -> {
+                                System.out.println("Make manger: " + profile.getName());
+                            }));
+                            contextMenuItems.add(new ContextMenuItem(Component.literal("Remove"), Icons.CLOSE, (b) -> {
+                                Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, false));
+                                storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
+                                AscensionShardScreen.this.refreshWidgets();
+                            }));
                         }
-                        AscensionShardScreen.this.refreshWidgets();
+                        if (!contextMenuItems.isEmpty()) {
+                            List<ContextMenuItem> contextMenu = new ArrayList<>(List.of(
+                                    new ContextMenuItem(Component.literal(profile.getName()), FaceIcon.getFace(profile), null).setCloseMenu(false),
+                                    ContextMenuItem.SEPARATOR
+                            ));
+
+                            contextMenu.addAll(contextMenuItems);
+                            getGui().openContextMenu(contextMenu);
+                        }
                     }
 
                     @Override
@@ -157,7 +178,6 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
     }
 
     private void addIflyInfo(TooltipList list) {
-
         Player playerByUUID = Minecraft.getInstance().level.getPlayerByUUID(this.ownerUUID);
         list.add(Component.literal("Owner: " + playerByUUID.getDisplayName().getString()).withStyle(ChatFormatting.AQUA));
         list.add(Component.literal("UUID: " + this.ownerUUID).withStyle(ChatFormatting.YELLOW));

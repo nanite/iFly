@@ -1,4 +1,4 @@
 package dev.wuffs.ifly.integration;
 
-public class FTBTeamsIntegration {
+public class VanillaTeamsIntegration {
 }

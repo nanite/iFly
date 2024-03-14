@@ -57,12 +57,12 @@ public class AscensionShardBlock extends Block implements EntityBlock {
         }
     }
 
-    @Override
-    public void playerDestroy(Level level, Player player, BlockPos blockPos, BlockState blockState, @Nullable BlockEntity blockEntity, ItemStack itemStack) {
-        if (blockEntity != null && ((AscensionShardBlockEntity) blockEntity).ownerUUID.equals(player.getUUID())) {
-            super.playerDestroy(level, player, blockPos, blockState, blockEntity, itemStack);
-        }
-    }
+//    @Override
+//    public void playerDestroy(Level level, Player player, BlockPos blockPos, BlockState blockState, @Nullable BlockEntity blockEntity, ItemStack itemStack) {
+//        if (blockEntity != null && ((AscensionShardBlockEntity) blockEntity).ownerUUID.equals(player.getUUID())) {
+//            super.playerDestroy(level, player, blockPos, blockState, blockEntity, itemStack);
+//        }
+//    }
 
     @Override
     public void onRemove(BlockState blockState, Level level, BlockPos blockPos, BlockState blockState2, boolean bl) {

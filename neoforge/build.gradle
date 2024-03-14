@@ -32,7 +32,9 @@ dependencies {
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
     shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }
 
-    modApi "dev.ftb.mods:ftb-library-neoforge:${rootProject.ftb_lib_version}"
+    modApi "dev.ftb.mods:ftb-library-neoforge:${ftb_lib_version}"
+    modApi "dev.ftb.mods:ftb-teams-neoforge:${ftb_teams_version}"
+
 }
 
 processResources {

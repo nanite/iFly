@@ -1,32 +1,32 @@
 package dev.wuffs.ifly.network;
 
+import com.mojang.authlib.GameProfile;
 import dev.architectury.networking.NetworkManager;
 import dev.wuffs.ifly.blocks.AscensionShardBlockEntity;
+import dev.wuffs.ifly.network.records.StoredPlayers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 public class C2SGUIInteract {
 
     BlockPos blockPos;
-    UUID playerUUID;
+    GameProfile profile;
     boolean added;
 
     public C2SGUIInteract(FriendlyByteBuf buf) {
         blockPos = buf.readBlockPos();
-        playerUUID = buf.readUUID();
+        profile = buf.readGameProfile();
         added = buf.readBoolean();
     }
 
-    public C2SGUIInteract(BlockPos pos, UUID playerUUID, boolean added) {
+    public C2SGUIInteract(BlockPos pos, GameProfile profile, boolean added) {
         // Message creation
         this.blockPos = pos;
-        this.playerUUID = playerUUID;
+        this.profile = profile;
         this.added = added;
 
     }
@@ -34,7 +34,7 @@ public class C2SGUIInteract {
     public void encode(FriendlyByteBuf buf) {
         // Encode data into the buf
         buf.writeBlockPos(blockPos);
-        buf.writeUUID(playerUUID);
+        buf.writeGameProfile(profile);
         buf.writeBoolean(added);
     }
 
@@ -46,19 +46,19 @@ public class C2SGUIInteract {
                 if (!ascensionShardBlockEntity.ownerUUID.equals(contextSupplier.get().getPlayer().getUUID())) {
                     return;
                 }
-                Player playerByUUID = contextSupplier.get().getPlayer().level().getPlayerByUUID(playerUUID);
-                if (playerByUUID == null) {
-                    return;
-                }
+//                Player playerByUUID = contextSupplier.get().getPlayer().level().getPlayerByUUID(profile.getId());
+//                if (playerByUUID == null) {
+//                    return;
+//                }
 
-                List<AscensionShardBlockEntity.StoredPlayers> storedPlayers = ascensionShardBlockEntity.storedPlayers;
+                List<StoredPlayers> storedPlayers = ascensionShardBlockEntity.storedPlayers;
                 if (added) {
-                    if (storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.playerUUID().equals(playerUUID))) {
+                    if (storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()))) {
                         return;
                     }
-                    storedPlayers.add(new AscensionShardBlockEntity.StoredPlayers(playerUUID, playerByUUID.getDisplayName(), true));
+                    storedPlayers.add(new StoredPlayers(profile, true));
                 } else {
-                    storedPlayers.removeIf(storedPlayer -> storedPlayer.playerUUID().equals(playerUUID));
+                    storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
                 }
                 ascensionShardBlockEntity.setChanged();
             }

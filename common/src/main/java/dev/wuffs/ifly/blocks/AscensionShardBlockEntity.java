@@ -1,16 +1,12 @@
 package dev.wuffs.ifly.blocks;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.wuffs.ifly.network.records.StoredPlayers;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -72,7 +68,7 @@ public class AscensionShardBlockEntity extends BlockEntity {
             boolean wfContains = weMadeFlying.contains(player.getUUID());
             boolean afContains = alreadyFlying.contains(player.getUUID());
 
-            if (!player.getUUID().equals(entity.ownerUUID) && !entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.playerUUID().equals(player.getUUID()))) {
+            if (!player.getUUID().equals(entity.ownerUUID) && !entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()))) {
                 if(wfContains && !afContains && containsIflyTag){
                     boolean wasFlying = player.getAbilities().flying;
                     weMadeFlying.add(player.getUUID());
@@ -159,19 +155,5 @@ public class AscensionShardBlockEntity extends BlockEntity {
         int resultTicks = ticksPerBlock * fallDistance;
 //        System.out.println("It would take " + resultTicks + " ticks to fall " + fallDistance + " blocks with the slow fall effect.");
         return resultTicks;
-    }
-
-    public record StoredPlayers(
-            UUID playerUUID,
-            Component playerName,
-            boolean allowed
-    ) {
-        public static final Codec<StoredPlayers> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                UUIDUtil.CODEC.fieldOf("playerUUID").forGetter(StoredPlayers::playerUUID),
-                ComponentSerialization.CODEC.fieldOf("playerName").forGetter(StoredPlayers::playerName),
-                Codec.BOOL.fieldOf("allowed").forGetter(StoredPlayers::allowed)
-        ).apply(instance, StoredPlayers::new));
-
-        public static final Codec<List<StoredPlayers>> LIST_CODEC = Codec.list(CODEC);
     }
 }
