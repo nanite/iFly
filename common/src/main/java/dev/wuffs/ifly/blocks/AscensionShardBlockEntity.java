@@ -31,8 +31,6 @@ public class AscensionShardBlockEntity extends BlockEntity {
     public static final AABB DETECT_BOX = Shapes.block().bounds();// TODO make config and upgrade modules
     public static final double RADIUS = 64D;
     public List<StoredPlayers> storedPlayers = new ArrayList<>();
-    public UUID ownerUUID;
-
     public static ObjectSet<UUID> alreadyFlying = new ObjectOpenHashSet<>();
     public static ObjectSet<UUID> weMadeFlying = new ObjectOpenHashSet<>();
 
@@ -68,7 +66,8 @@ public class AscensionShardBlockEntity extends BlockEntity {
             boolean wfContains = weMadeFlying.contains(player.getUUID());
             boolean afContains = alreadyFlying.contains(player.getUUID());
 
-            if (!player.getUUID().equals(entity.ownerUUID) && !entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()))) {
+            boolean isPlayerOwner = entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()) && storedPlayer.level().isOwner());
+            if (!isPlayerOwner && !entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()))) {
                 if(wfContains && !afContains && containsIflyTag){
                     boolean wasFlying = player.getAbilities().flying;
                     weMadeFlying.add(player.getUUID());
@@ -127,14 +126,12 @@ public class AscensionShardBlockEntity extends BlockEntity {
         super.saveAdditional(compoundTag);
         Tag storePlayersCompound = StoredPlayers.LIST_CODEC.encodeStart(NbtOps.INSTANCE, storedPlayers).getOrThrow(false, RuntimeException::new);
         compoundTag.put("storedPlayers", storePlayersCompound);
-        compoundTag.putUUID("ownerUUID", ownerUUID);
     }
 
     @Override
     public void load(CompoundTag compoundTag) {
         super.load(compoundTag);
         storedPlayers = new ArrayList<>(StoredPlayers.LIST_CODEC.parse(NbtOps.INSTANCE, compoundTag.get("storedPlayers")).getOrThrow(false, RuntimeException::new));
-        ownerUUID = compoundTag.getUUID("ownerUUID");
     }
 
     public static double getDistanceToGround(Player player) {

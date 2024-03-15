@@ -1,6 +1,7 @@
 package dev.wuffs.ifly.network;
 
 import dev.architectury.networking.NetworkManager;
+import dev.wuffs.ifly.api.PlayerLevel;
 import dev.wuffs.ifly.client.gui.screen.AscensionShardScreen;
 import dev.wuffs.ifly.network.records.AvailablePlayer;
 import dev.wuffs.ifly.network.records.StoredPlayers;
@@ -26,32 +27,29 @@ public class S2COpenIflyScreen {
         int spSize = buf.readInt();
         int apSize = buf.readInt();
         blockPos = buf.readBlockPos();
-        ownerUUID = buf.readUUID();
 
         for (int i = 0; i < apSize; i++) {
             ap.add(new AvailablePlayer(buf.readGameProfile()));
         }
         for (int i = 0; i < spSize; i++) {
-            sp.add(new StoredPlayers(buf.readGameProfile(), buf.readBoolean()));
+            sp.add(new StoredPlayers(buf.readGameProfile(), buf.readEnum(PlayerLevel.class)));
         }
         availablePlayers = ap;
         storedPlayers = sp;
 
     }
 
-    public S2COpenIflyScreen(BlockPos blockPos, List<StoredPlayers> storedPlayers, List<AvailablePlayer> availablePlayers, UUID ownerUUID) {
+    public S2COpenIflyScreen(BlockPos blockPos, List<StoredPlayers> storedPlayers, List<AvailablePlayer> availablePlayers) {
         // Message creation
         this.blockPos = blockPos;
         this.storedPlayers = storedPlayers;
         this.availablePlayers = availablePlayers;
-        this.ownerUUID = ownerUUID;
     }
 
     public void encode(FriendlyByteBuf buf) {
         buf.writeInt(storedPlayers.size());
         buf.writeInt(availablePlayers.size());
         buf.writeBlockPos(blockPos);
-        buf.writeUUID(ownerUUID);
         for (AvailablePlayer availablePlayer : availablePlayers) {
             // Encode data into the buf
             buf.writeGameProfile(availablePlayer.profile());
@@ -59,14 +57,14 @@ public class S2COpenIflyScreen {
         for (StoredPlayers storedPlayer : storedPlayers) {
             // Encode data into the buf
             buf.writeGameProfile(storedPlayer.player());
-            buf.writeBoolean(storedPlayer.allowed());
+            buf.writeEnum(storedPlayer.level());
         }
     }
 
     public void apply(Supplier<NetworkManager.PacketContext> contextSupplier) {
         // On receive
         contextSupplier.get().queue(() -> {
-            new AscensionShardScreen(blockPos, storedPlayers, availablePlayers, ownerUUID).openGui();
+            new AscensionShardScreen(blockPos, storedPlayers, availablePlayers).openGui();
         });
     }
 }

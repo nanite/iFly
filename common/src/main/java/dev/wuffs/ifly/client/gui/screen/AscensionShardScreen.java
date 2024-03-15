@@ -7,6 +7,7 @@ import dev.ftb.mods.ftblibrary.ui.*;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftblibrary.ui.misc.NordColors;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
+import dev.wuffs.ifly.api.PlayerLevel;
 import dev.wuffs.ifly.network.C2SGUIInteract;
 import dev.wuffs.ifly.network.Network;
 import dev.wuffs.ifly.network.records.AvailablePlayer;
@@ -16,11 +17,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class AscensionShardScreen extends BaseScreen implements NordColors {
 
@@ -30,17 +29,14 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
     private Button addButton;
 
     public BlockPos blockPos;
-    public UUID ownerUUID;
-    public List<UUID> managersUUID;
     public List<StoredPlayers> storedPlayers;
     public List<AvailablePlayer> availablePlayers;
 
-    public AscensionShardScreen(BlockPos blockPos, List<StoredPlayers> storedPlayers, List<AvailablePlayer> availablePlayers, UUID ownerUUID) {
+    public AscensionShardScreen(BlockPos blockPos, List<StoredPlayers> storedPlayers, List<AvailablePlayer> availablePlayers) {
         super();
         this.blockPos = blockPos;
         this.storedPlayers = storedPlayers;
         this.availablePlayers = availablePlayers;
-        this.ownerUUID = ownerUUID;
     }
 
     @Override
@@ -75,7 +71,7 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
         add(addButton = new SimpleButton(this, Component.literal("Add"), Icons.ADD.withTint(SNOW_STORM_2), (simpleButton, mouseButton) -> closeGui()) {
             @Override
             public void onClicked(MouseButton button) {
-                new AddPlayerScreen(storedPlayers, availablePlayers, blockPos, ownerUUID).openGui();
+                new AddPlayerScreen(storedPlayers, availablePlayers, blockPos).openGui();
             }
 
             @Override
@@ -91,13 +87,9 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
             }
         };
 
-        GameProfile ownerByUUID = Minecraft.getInstance().level.getPlayerByUUID(this.ownerUUID).getGameProfile();
-        var ownerEntry = getEntry(whitelistedPlayersPanel, ownerByUUID, false);
-        whitelistedPlayersPanel.add(ownerEntry);
-
 //        for (int i = 0; i < 30; i++) {
         for (StoredPlayers player : storedPlayers) {
-            var playerEntry = getEntry(whitelistedPlayersPanel, player.player(), true);
+            var playerEntry = getEntry(whitelistedPlayersPanel, player.player(), !player.level().isOwner());
             whitelistedPlayersPanel.add(playerEntry);
 //            }
         }
@@ -133,15 +125,41 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
                             return;
                         }
                         List<ContextMenuItem> contextMenuItems = new ArrayList<>();
-                        if (!profile.getId().equals(ownerUUID)) {
-                            contextMenuItems.add(new ContextMenuItem(Component.literal("Make owner"), Icons.DIAMOND, (b) -> {
-                                System.out.println("Make owner: " + profile.getName());
-                            }));
-                            contextMenuItems.add(new ContextMenuItem(Component.literal("Make manger"), Icons.SHIELD, (b) -> {
-                                System.out.println("Make manger: " + profile.getName());
-                            }));
+//                        if (!profile.getId().equals(ownerUUID)) {
+                        System.out.println("Player: " + profile.getName());
+                        StoredPlayers currentP = storedPlayers.stream().filter(storedPlayer -> storedPlayer.player().getId().equals(Minecraft.getInstance().getGameProfile().getId())).findFirst().get();
+                        StoredPlayers targetPlayer = storedPlayers.stream().filter(storedPlayer -> storedPlayer.player().getId().equals(profile.getId())).findFirst().get();
+                        if (currentP.level().isManagerOrGreater()){
+                            if(currentP.level().isOwner()){
+                                contextMenuItems.add(new ContextMenuItem(Component.literal("Make owner"), Icons.DIAMOND, (b) -> {
+                                    Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.OWNER));
+                                    storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
+                                    // Remove the current owner from the list and add them back as a normal user
+                                    GameProfile currentOwner = storedPlayers.stream().filter(storedPlayer -> storedPlayer.level().isOwner()).findFirst().get().player();
+                                    storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(currentOwner.getId()));
+                                    storedPlayers.add(new StoredPlayers(currentOwner, PlayerLevel.MEMBER));
+
+                                    // Add the new owner
+                                    storedPlayers.add(new StoredPlayers(profile, PlayerLevel.OWNER));
+                                }));
+                            }
+
+                            if (!targetPlayer.level().isManagerOrGreater()){
+                                contextMenuItems.add(new ContextMenuItem(Component.literal("Make manger"), Icons.SHIELD, (b) -> {
+                                    Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.MANAGER));
+                                    storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
+                                    storedPlayers.add(new StoredPlayers(profile, PlayerLevel.MANAGER));
+                                }));
+                            } else if (targetPlayer.level().isManagerOrGreater() && !targetPlayer.level().isOwner()){
+                                contextMenuItems.add(new ContextMenuItem(Component.literal("Make member"), Icons.ACCEPT_GRAY, (b) -> {
+                                    Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.MEMBER));
+                                    storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
+                                    storedPlayers.add(new StoredPlayers(profile, PlayerLevel.MEMBER));
+                                }));
+
+                            }
                             contextMenuItems.add(new ContextMenuItem(Component.literal("Remove"), Icons.CLOSE, (b) -> {
-                                Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, false));
+                                Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.REMOVE));
                                 storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
                                 AscensionShardScreen.this.refreshWidgets();
                             }));
@@ -178,8 +196,8 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
     }
 
     private void addIflyInfo(TooltipList list) {
-        Player playerByUUID = Minecraft.getInstance().level.getPlayerByUUID(this.ownerUUID);
-        list.add(Component.literal("Owner: " + playerByUUID.getDisplayName().getString()).withStyle(ChatFormatting.AQUA));
-        list.add(Component.literal("UUID: " + this.ownerUUID).withStyle(ChatFormatting.YELLOW));
+        StoredPlayers storedPlayer = storedPlayers.stream().filter(sp -> sp.level().equals(PlayerLevel.OWNER)).findFirst().get();
+        list.add(Component.literal("Owner: " + storedPlayer.player().getName()).withStyle(ChatFormatting.AQUA));
+        list.add(Component.literal("UUID: " + storedPlayer.player().getId()).withStyle(ChatFormatting.YELLOW));
     }
 }

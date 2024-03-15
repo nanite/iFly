@@ -1,7 +1,9 @@
 package dev.wuffs.ifly.blocks;
 
+import dev.wuffs.ifly.api.PlayerLevel;
 import dev.wuffs.ifly.network.C2SOpenIflyScreen;
 import dev.wuffs.ifly.network.Network;
+import dev.wuffs.ifly.network.records.StoredPlayers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -50,19 +52,15 @@ public class AscensionShardBlock extends Block implements EntityBlock {
         if (level.isClientSide) {
             return;
         }
-        BlockEntity blockEntity = level.getBlockEntity(blockPos);
-        if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
-            ascensionShardBlockEntity.ownerUUID = livingEntity.getUUID();
-            ascensionShardBlockEntity.setChanged();
+
+        if (livingEntity instanceof Player) {
+            BlockEntity blockEntity = level.getBlockEntity(blockPos);
+            if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
+                ascensionShardBlockEntity.storedPlayers.add(new StoredPlayers(((Player) livingEntity).getGameProfile(), PlayerLevel.OWNER));
+                ascensionShardBlockEntity.setChanged();
+            }
         }
     }
-
-//    @Override
-//    public void playerDestroy(Level level, Player player, BlockPos blockPos, BlockState blockState, @Nullable BlockEntity blockEntity, ItemStack itemStack) {
-//        if (blockEntity != null && ((AscensionShardBlockEntity) blockEntity).ownerUUID.equals(player.getUUID())) {
-//            super.playerDestroy(level, player, blockPos, blockState, blockEntity, itemStack);
-//        }
-//    }
 
     @Override
     public void onRemove(BlockState blockState, Level level, BlockPos blockPos, BlockState blockState2, boolean bl) {

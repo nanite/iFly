@@ -38,14 +38,15 @@ public class C2SOpenIflyScreen{
         contextSupplier.get().queue(() -> {
             BlockEntity blockEntity = contextSupplier.get().getPlayer().level().getBlockEntity(blockPos);
             if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
+                List<StoredPlayers> storedPlayers = ascensionShardBlockEntity.storedPlayers;
                 Player player = contextSupplier.get().getPlayer();
-                if (ascensionShardBlockEntity.ownerUUID == null || !ascensionShardBlockEntity.ownerUUID.equals(player.getUUID())) {
-                    player.displayClientMessage(Component.literal("You are not the owner of this block!").withStyle(ChatFormatting.RED), true);
+                boolean isPlayerOwner = storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()) && storedPlayer.level().isManagerOrGreater());
+                if (!isPlayerOwner) {
+                    player.displayClientMessage(Component.literal("You are not the owner/manager of this block!").withStyle(ChatFormatting.RED), true);
                     return;
                 }
-                List<StoredPlayers> storedPlayers = ascensionShardBlockEntity.storedPlayers;
                 List<AvailablePlayer> availablePlayers = contextSupplier.get().getPlayer().level().players().stream().map(player1 -> new AvailablePlayer(player1.getGameProfile())).toList();
-                Network.CHANNEL.sendToPlayer((ServerPlayer) player, new S2COpenIflyScreen(blockPos, storedPlayers, availablePlayers, ascensionShardBlockEntity.ownerUUID));
+                Network.CHANNEL.sendToPlayer((ServerPlayer) player, new S2COpenIflyScreen(blockPos, storedPlayers, availablePlayers));
             }
         });
     }

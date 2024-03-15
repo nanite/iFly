@@ -6,6 +6,7 @@ import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.*;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftblibrary.ui.misc.NordColors;
+import dev.wuffs.ifly.api.PlayerLevel;
 import dev.wuffs.ifly.network.C2SGUIInteract;
 import dev.wuffs.ifly.network.Network;
 import dev.wuffs.ifly.network.records.AvailablePlayer;
@@ -19,7 +20,6 @@ import net.minecraft.network.chat.Style;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 public class AddPlayerScreen extends BaseScreen implements NordColors, IAddPlayer, IAddTeam {
 
@@ -34,16 +34,14 @@ public class AddPlayerScreen extends BaseScreen implements NordColors, IAddPlaye
     private final List<StoredPlayers> storedPlayers;
     private final List<AvailablePlayer> availablePlayers;
     private final BlockPos blockPos;
-    private final UUID ownerUUID;
 
-    public AddPlayerScreen(List<StoredPlayers> storedPlayers, List<AvailablePlayer> availablePlayers, BlockPos blockPos, UUID ownerUUID) {
+    public AddPlayerScreen(List<StoredPlayers> storedPlayers, List<AvailablePlayer> availablePlayers, BlockPos blockPos) {
         this.storedPlayers = storedPlayers;
         this.availablePlayers = availablePlayers.stream()
-                .filter((availablePlayer) -> !availablePlayer.profile().getId().equals(ownerUUID))
+//                .filter((availablePlayer) -> !availablePlayer.profile().getId().equals(ownerUUID))
                 .filter((availablePlayer) -> storedPlayers.stream().noneMatch(storedPlayer -> storedPlayer.player().getId().equals(availablePlayer.profile().getId())))
                 .toList();
         this.blockPos = blockPos;
-        this.ownerUUID = ownerUUID;
     }
 
     @Override
@@ -66,8 +64,8 @@ public class AddPlayerScreen extends BaseScreen implements NordColors, IAddPlaye
         add(executeButton = new ExecuteButton(Component.literal("Add"), Icons.ADD, () -> {
             // Player Stuff
             for (GameProfile invite : playerInvites) {
-                Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, invite, true));
-                storedPlayers.add(new StoredPlayers(invite, true));
+                Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, invite, PlayerLevel.MEMBER));
+                storedPlayers.add(new StoredPlayers(invite, PlayerLevel.MEMBER));
             }
             // Team Stuff
             for (GameProfile invite : teamInvites) {
@@ -136,9 +134,9 @@ public class AddPlayerScreen extends BaseScreen implements NordColors, IAddPlaye
                 add(new TextField(this).setText(Component.literal("No selectable players").withStyle(ChatFormatting.ITALIC)).addFlags(Theme.CENTERED));
             } else {
                 availablePlayers.forEach(player -> {
-                    if (!player.profile().getId().equals(ownerUUID) && !storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.profile().getId()))) {
+//                    if (!player.profile().getId().equals(ownerUUID) && !storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.profile().getId()))) {
                         add(new PlayerButton(this, AddPlayerScreen.this, player.profile()));
-                    }
+//                    }
                 });
             }
         }
