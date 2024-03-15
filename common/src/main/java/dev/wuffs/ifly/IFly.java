@@ -35,10 +35,10 @@ public class IFly {
 
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof AscensionShardBlockEntity asBlockEntity) {
-                if (player.hasPermissions(Commands.LEVEL_GAMEMASTERS) || asBlockEntity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()) && storedPlayer.level().isManagerOrGreater())) {
+                if (player.hasPermissions(Commands.LEVEL_GAMEMASTERS) || asBlockEntity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()) && storedPlayer.level().isOwner())) {
                     return EventResult.pass();
                 }else {
-                    player.displayClientMessage(Component.literal("You are not the owner/manager of this block!").withStyle(ChatFormatting.RED), true);
+                    player.displayClientMessage(Component.literal("You are not the owner of this block!").withStyle(ChatFormatting.RED), true);
                     return EventResult.interruptFalse();
                 }
             }
