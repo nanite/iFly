@@ -31,7 +31,6 @@ public class AscensionShardBlockEntity extends BlockEntity {
 
     public static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(AscensionShardBlockEntity.class);
     public static boolean ENABLED = true; // TODO REMOVE THIS
-
     public static final AABB DETECT_BOX = Shapes.block().bounds();// TODO Change to 2d checking on server tick
     public static final double RADIUS = 64D;
     public List<StoredPlayers> storedPlayers = new ArrayList<>();
@@ -78,7 +77,7 @@ public class AscensionShardBlockEntity extends BlockEntity {
                 }
             }
 
-            LOGGER.debug("Player: " + player.getDisplayName().getString() + " mayfly: " + player.getAbilities().mayfly + " flying: " + player.getAbilities().flying);
+//            LOGGER.debug("Player: " + player.getDisplayName().getString() + " mayfly: " + player.getAbilities().mayfly + " flying: " + player.getAbilities().flying);
             if (player.getAbilities().mayfly && !wfContains) {
                 alreadyFlying.add(player.getUUID());
             } else if (!player.getAbilities().mayfly) {
@@ -89,8 +88,8 @@ public class AscensionShardBlockEntity extends BlockEntity {
             if (!wfContains && !afContains && entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()))) {
                 setFlight(player, blockPos, true);
             }
-            LOGGER.debug("We made flying: " + weMadeFlying);
-            LOGGER.debug("Already flying: " + alreadyFlying);
+//            LOGGER.debug("We made flying: " + weMadeFlying);
+//            LOGGER.debug("Already flying: " + alreadyFlying);
         }
 
         for (Player player : nonSelectedPlayers) {

@@ -34,7 +34,6 @@ dependencies {
 
     modApi "dev.ftb.mods:ftb-library-neoforge:${ftb_lib_version}"
     modApi "dev.ftb.mods:ftb-teams-neoforge:${ftb_teams_version}"
-
 }
 
 processResources {
