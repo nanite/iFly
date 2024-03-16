@@ -1,12 +1,14 @@
 package dev.wuffs.ifly;
 
 import com.mojang.brigadier.CommandDispatcher;
+import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.event.events.common.BlockEvent;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import dev.wuffs.ifly.blocks.Blocks;
+import dev.wuffs.ifly.client.AscensionShardClient;
 import dev.wuffs.ifly.common.BlockEventListener;
 import dev.wuffs.ifly.common.PlayerEventListener;
 import dev.wuffs.ifly.items.Items;
@@ -18,13 +20,13 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import software.bernie.geckolib.GeckoLib;
 
 public class AscensionShard {
     public static final String MOD_ID = "ifly";
 
     public AscensionShard(){
         CommandRegistrationEvent.EVENT.register(this::registerCommands);
-//        ClientLifecycleEvent.CLIENT_SETUP.register(IFlyClient::setup);
         Blocks.BLOCKS.register();
         Blocks.BLOCKENTITY.register();
         Items.ITEMS.register();
@@ -50,5 +52,7 @@ public class AscensionShard {
                     })
             .icon(() -> new ItemStack(Items.BUNDLE.get())).build());
 
-    public void setup(){}
+    public void setup(){
+        GeckoLib.initialize();
+    }
 }

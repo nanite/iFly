@@ -34,6 +34,8 @@ dependencies {
 
     modApi "dev.ftb.mods:ftb-library-neoforge:${ftb_lib_version}"
     modApi "dev.ftb.mods:ftb-teams-neoforge:${ftb_teams_version}"
+
+    compileOnly ("software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}")
 }
 
 processResources {

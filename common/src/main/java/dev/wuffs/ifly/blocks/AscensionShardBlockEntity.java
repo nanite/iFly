@@ -20,6 +20,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import org.slf4j.Logger;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +33,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class AscensionShardBlockEntity extends BlockEntity {
+public class AscensionShardBlockEntity extends BlockEntity implements GeoBlockEntity {
 
     public static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(AscensionShardBlockEntity.class);
+
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private static final RawAnimation ANIM = RawAnimation.begin().thenPlay("animation.ascension_shard.rotate_bounce");
     public static boolean ENABLED = true; // TODO REMOVE THIS
     public static final AABB DETECT_BOX = Shapes.block().bounds();// TODO Change to 2d checking on server tick
     public static final double RADIUS = 64D;
@@ -183,5 +192,15 @@ public class AscensionShardBlockEntity extends BlockEntity {
 
             player.onUpdateAbilities();
         }
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, state -> state.setAndContinue(ANIM)));
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return this.cache;
     }
 }

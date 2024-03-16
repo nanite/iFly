@@ -6,14 +6,12 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 
-public class AscensionShardEntityRenderer implements BlockEntityRenderer<AscensionShardBlockEntity> {
+public class ASBlockEntityRenderer implements BlockEntityRenderer<AscensionShardBlockEntity> {
 
-    public AscensionShardEntityRenderer(BlockEntityRendererProvider.Context context){
-
+    public ASBlockEntityRenderer(){
     }
 
     @Override

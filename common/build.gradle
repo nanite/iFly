@@ -11,12 +11,14 @@ loom {
 dependencies {
     // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
     // Do NOT use other classes from fabric loader
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     // Remove the next line if you don't want to depend on the API
-    modApi "dev.architectury:architectury:${rootProject.architectury_version}"
-    modCompileOnly "dev.ftb.mods:ftb-library:${rootProject.ftb_lib_version}"
-    modCompileOnly "dev.ftb.mods:ftb-teams:${rootProject.ftb_teams_version}"
+    modApi "dev.architectury:architectury:${architectury_version}"
+    modCompileOnly "dev.ftb.mods:ftb-library:${ftb_lib_version}"
+    modCompileOnly "dev.ftb.mods:ftb-teams:${ftb_teams_version}"
     modApi "earth.terrarium.cadmus:cadmus-common-$minecraft_version:$cadmus_version"
+
+    modApi ("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
 }
 
 sourceSets.main.resources.srcDir 'src/generated/resources'
