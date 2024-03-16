@@ -2,7 +2,7 @@ package dev.wuffs.ifly.network;
 
 import com.mojang.authlib.GameProfile;
 import dev.architectury.networking.NetworkManager;
-import dev.wuffs.ifly.api.PlayerLevel;
+import dev.wuffs.ifly.common.PlayerLevel;
 import dev.wuffs.ifly.blocks.AscensionShardBlockEntity;
 import dev.wuffs.ifly.network.records.StoredPlayers;
 import net.minecraft.core.BlockPos;

@@ -1,4 +1,4 @@
-package dev.wuffs.ifly.api;
+package dev.wuffs.ifly.common;
 
 import com.mojang.serialization.Codec;
 import dev.ftb.mods.ftblibrary.icon.Icon;

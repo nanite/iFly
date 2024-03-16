@@ -1,6 +1,6 @@
 package dev.wuffs.ifly.blocks;
 
-import dev.wuffs.ifly.api.PlayerLevel;
+import dev.wuffs.ifly.common.PlayerLevel;
 import dev.wuffs.ifly.network.C2SOpenIflyScreen;
 import dev.wuffs.ifly.network.Network;
 import dev.wuffs.ifly.network.records.StoredPlayers;

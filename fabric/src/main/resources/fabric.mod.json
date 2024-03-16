@@ -16,10 +16,10 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "dev.wuffs.ifly.IFly::init"
+      "dev.wuffs.ifly.AscensionShard::setup"
     ],
     "client": [
-      "dev.wuffs.ifly.client.IFlyClient::setup"
+      "dev.wuffs.ifly.client.AscensionShardClient::setup"
     ],
     "fabric-datagen": [
       "dev.wuffs.ifly.fabric.DataGens"

@@ -19,6 +19,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,10 @@ import java.util.stream.Collectors;
 
 public class AscensionShardBlockEntity extends BlockEntity {
 
-    public static final AABB DETECT_BOX = Shapes.block().bounds();// TODO make config and upgrade modules
+    public static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(AscensionShardBlockEntity.class);
+    public static boolean ENABLED = true; // TODO REMOVE THIS
+
+    public static final AABB DETECT_BOX = Shapes.block().bounds();// TODO Change to 2d checking on server tick
     public static final double RADIUS = 64D;
     public List<StoredPlayers> storedPlayers = new ArrayList<>();
     public static ObjectSet<UUID> alreadyFlying = new ObjectOpenHashSet<>();
@@ -39,17 +43,20 @@ public class AscensionShardBlockEntity extends BlockEntity {
     }
 
     public static <T extends BlockEntity> void ticker(Level level, BlockPos blockPos, BlockState state, T t) {
+        // TODO REMOVE THIS AFTER TESTING!!!!!!
+        if (!ENABLED) {
+            return;
+        }
         if (!(t instanceof AscensionShardBlockEntity entity) || level.getGameTime() % 20 != 0 || entity.level == null) {
             return;
         }
 
         BlockPos pos = entity.worldPosition;
         AABB aabb = DETECT_BOX.move(pos).inflate(RADIUS).setMinY(level.getMinBuildHeight()).setMaxY(level.getMaxBuildHeight());
-
         List<Player> players = entity.level.getEntitiesOfClass(Player.class, aabb);
-
         Set<UUID> playerUUIDs = players.stream().map(Entity::getUUID).collect(Collectors.toSet());
 
+        // List of server players that are not in the AABB
         List<Player> nonSelectedPlayers = entity.level.getServer().getPlayerList().getPlayers().stream()
                 .filter(p -> !playerUUIDs.contains(p.getUUID()))
                 .collect(Collectors.toList());
@@ -60,8 +67,6 @@ public class AscensionShardBlockEntity extends BlockEntity {
             }
 
             boolean containsIflyTag = player.getTags().contains("ifly:" + blockPos.toShortString());
-
-
             // Check if the player is contained in the storedPlayers list
             boolean wfContains = weMadeFlying.contains(player.getUUID());
             boolean afContains = alreadyFlying.contains(player.getUUID());
@@ -69,54 +74,38 @@ public class AscensionShardBlockEntity extends BlockEntity {
             boolean isPlayerOwner = entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()) && storedPlayer.level().isOwner());
             if (!isPlayerOwner && !entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()))) {
                 if(wfContains && !afContains && containsIflyTag){
-                    boolean wasFlying = player.getAbilities().flying;
-                    weMadeFlying.add(player.getUUID());
-                    player.removeTag("ifly:" + blockPos.toShortString());
-                    player.getAbilities().flying = false;
-                    player.getAbilities().mayfly = false;
-                    player.onUpdateAbilities();
-                    double distanceToGround = getDistanceToGround(player);
-                    if (distanceToGround >= 4 && wasFlying) {
-                        int timeToFall = fallTimeCalc((int) Math.ceil(distanceToGround));
-                        player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, timeToFall));
-                    }
-                    player.onUpdateAbilities();
+                    setFlight(player, blockPos, false);
                 }
-                continue;
             }
 
+            LOGGER.debug("Player: " + player.getDisplayName().getString() + " mayfly: " + player.getAbilities().mayfly + " flying: " + player.getAbilities().flying);
             if (player.getAbilities().mayfly && !wfContains) {
                 alreadyFlying.add(player.getUUID());
-            } else if (!player.getAbilities().mayfly && wfContains) {
+            } else if (!player.getAbilities().mayfly) {
                 alreadyFlying.remove(player.getUUID());
                 weMadeFlying.remove(player.getUUID());
             }
 
-            if (!wfContains && !afContains) {
-                weMadeFlying.add(player.getUUID());
-                player.addTag("ifly:" + blockPos.toShortString());
-                player.getAbilities().mayfly = true;
-                player.onUpdateAbilities();
+            if (!wfContains && !afContains && entity.storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()))) {
+                setFlight(player, blockPos, true);
             }
+            LOGGER.debug("We made flying: " + weMadeFlying);
+            LOGGER.debug("Already flying: " + alreadyFlying);
         }
 
         for (Player player : nonSelectedPlayers) {
             boolean containsIflyTag = player.getTags().contains("ifly:" + blockPos.toShortString());
-            if (alreadyFlying.contains(player.getUUID()) || !weMadeFlying.contains(player.getUUID()) || player.isCreative() || player.isSpectator() || !containsIflyTag) {
+            /*
+            * If the player is in creative or spectator mode, we don't care about them
+            * If the player doesn't have the ifly tag, we don't care about them
+            * If the player is NOT in the weMadeFlying list, we don't care about them
+            * If the player is in the alreadyFlying list, we don't care about them
+            * */
+            if (player.isCreative() || player.isSpectator() || !containsIflyTag || !weMadeFlying.contains(player.getUUID()) || alreadyFlying.contains(player.getUUID())) {
                 continue;
             }
-
-            weMadeFlying.remove(player.getUUID());
-            boolean wasFlying = player.getAbilities().flying;
-            player.getAbilities().mayfly = false;
-            player.getAbilities().flying = false;
-            player.removeTag("ifly:" + blockPos.toShortString());
-            double distanceToGround = getDistanceToGround(player);
-            if (distanceToGround >= 4 && wasFlying) {
-                int timeToFall = fallTimeCalc((int) Math.ceil(distanceToGround));
-                player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, timeToFall));
-            }
-            player.onUpdateAbilities();
+            // Remove flight from the player
+            setFlight(player, blockPos, false);
         }
     }
 
@@ -152,5 +141,48 @@ public class AscensionShardBlockEntity extends BlockEntity {
         int resultTicks = ticksPerBlock * fallDistance;
 //        System.out.println("It would take " + resultTicks + " ticks to fall " + fallDistance + " blocks with the slow fall effect.");
         return resultTicks;
+    }
+
+    public static void setFlight(Player player, BlockPos blockPos, boolean allowFlight) {
+        if (allowFlight) {
+            /*
+            * Redundant checks for the player's game mode and if they are already flying
+            * */
+            // We don't care about creative or spectator players
+            if(player.isCreative() || player.isSpectator()) return;
+            // Ignore the player if they are already flying
+            if(player.getAbilities().mayfly && !weMadeFlying.contains(player.getUUID()) && !alreadyFlying.contains(player.getUUID())){
+                alreadyFlying.add(player.getUUID());
+                return;
+            }
+
+            player.getAbilities().mayfly = true;
+            player.addTag("ifly:" + blockPos.toShortString());
+
+            weMadeFlying.add(player.getUUID());
+
+            player.onUpdateAbilities();
+        } else {
+            // Ignore the player if they are in creative or spectator mode
+            if(player.isCreative() || player.isSpectator()) return;
+            // We don't want to remove the players flight abilities if they are set by something else
+            if (player.getAbilities().mayfly && alreadyFlying.contains(player.getUUID())) return;
+
+            boolean wasFlying = player.getAbilities().flying;
+            player.getAbilities().mayfly = false;
+            player.getAbilities().flying = false;
+            player.removeTag("ifly:" + blockPos.toShortString());
+
+            weMadeFlying.remove(player.getUUID()); // Remove the player from the weMadeFlying list
+
+            // Calculate the distance to the ground and apply the slow falling effect if the player was flying
+            double distanceToGround = getDistanceToGround(player);
+            if (distanceToGround >= 4 && wasFlying) {
+                int timeToFall = fallTimeCalc((int) Math.ceil(distanceToGround));
+                player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, timeToFall));
+            }
+
+            player.onUpdateAbilities();
+        }
     }
 }

@@ -7,14 +7,16 @@ import dev.ftb.mods.ftblibrary.ui.*;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftblibrary.ui.misc.NordColors;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
-import dev.wuffs.ifly.api.PlayerLevel;
+import dev.wuffs.ifly.common.PlayerLevel;
 import dev.wuffs.ifly.network.C2SGUIInteract;
 import dev.wuffs.ifly.network.Network;
+import dev.wuffs.ifly.network.debug.C2SDebugScreen;
 import dev.wuffs.ifly.network.records.AvailablePlayer;
 import dev.wuffs.ifly.network.records.StoredPlayers;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 
@@ -65,6 +67,13 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
 
             @Override
             public void playClickSound() {
+            }
+
+            @Override
+            public void onClicked(MouseButton button) {
+                if(Screen.hasControlDown() && Screen.hasShiftDown()){
+                    Network.CHANNEL.sendToServer(new C2SDebugScreen());
+                }
             }
         });
 

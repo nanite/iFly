@@ -6,7 +6,7 @@ import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.*;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftblibrary.ui.misc.NordColors;
-import dev.wuffs.ifly.api.PlayerLevel;
+import dev.wuffs.ifly.common.PlayerLevel;
 import dev.wuffs.ifly.network.C2SGUIInteract;
 import dev.wuffs.ifly.network.Network;
 import dev.wuffs.ifly.network.records.AvailablePlayer;

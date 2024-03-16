@@ -3,7 +3,7 @@ package dev.wuffs.ifly.network.records;
 import com.mojang.authlib.GameProfile;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.wuffs.ifly.api.PlayerLevel;
+import dev.wuffs.ifly.common.PlayerLevel;
 import net.minecraft.util.ExtraCodecs;
 
 import java.util.List;

@@ -1,8 +1,8 @@
 package dev.wuffs.ifly.network;
 
 import dev.architectury.networking.NetworkManager;
-import dev.wuffs.ifly.api.PlayerLevel;
 import dev.wuffs.ifly.client.gui.screen.AscensionShardScreen;
+import dev.wuffs.ifly.common.PlayerLevel;
 import dev.wuffs.ifly.network.records.AvailablePlayer;
 import dev.wuffs.ifly.network.records.StoredPlayers;
 import net.minecraft.core.BlockPos;
