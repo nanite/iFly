@@ -16,7 +16,7 @@ public class ASBlockEntityRenderer implements BlockEntityRenderer<AscensionShard
 
     @Override
     public void render(AscensionShardBlockEntity blockEntity, float f, PoseStack poseStack, MultiBufferSource multiBufferSource, int i, int j) {
-        AABB aabb = new AABB(BlockPos.ZERO).inflate(AscensionShardBlockEntity.RADIUS).setMinY(blockEntity.getLevel().getMinBuildHeight()).setMaxY(blockEntity.getLevel().getMaxBuildHeight());
-        LevelRenderer.renderLineBox(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.LINES), aabb, 1,0.5f,1,1);
+//        AABB aabb = new AABB(BlockPos.ZERO).inflate(AscensionShardBlockEntity.RADIUS).setMinY(blockEntity.getLevel().getMinBuildHeight()).setMaxY(blockEntity.getLevel().getMaxBuildHeight());
+//        LevelRenderer.renderLineBox(poseStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.LINES), aabb, 1,0.5f,1,1);
     }
 }

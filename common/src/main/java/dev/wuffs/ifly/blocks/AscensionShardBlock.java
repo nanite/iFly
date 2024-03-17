@@ -30,17 +30,17 @@ import java.util.UUID;
 import static dev.wuffs.ifly.blocks.AscensionShardBlockEntity.fallTimeCalc;
 import static dev.wuffs.ifly.blocks.AscensionShardBlockEntity.getDistanceToGround;
 
-public class AscensionShardBlock extends Block {
+public class AscensionShardBlock extends Block implements EntityBlock {
 
     public AscensionShardBlock() {
         super(Properties.of().strength(0.4f, 3600000.0F).sound(SoundType.STONE).noOcclusion());
     }
 
-//    @Nullable
-//    @Override
-//    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
-//        return new AscensionShardBlockEntity(blockPos, blockState);
-//    }
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+        return new AscensionShardBlockEntity(blockPos, blockState);
+    }
 
 //    @Nullable
 //    @Override
