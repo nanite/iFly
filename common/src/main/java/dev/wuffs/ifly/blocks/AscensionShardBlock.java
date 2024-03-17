@@ -1,6 +1,7 @@
 package dev.wuffs.ifly.blocks;
 
 import dev.wuffs.ifly.common.PlayerLevel;
+import dev.wuffs.ifly.flight.FlightManager;
 import dev.wuffs.ifly.network.C2SOpenIflyScreen;
 import dev.wuffs.ifly.network.Network;
 import dev.wuffs.ifly.network.records.StoredPlayers;
@@ -29,71 +30,88 @@ import java.util.UUID;
 import static dev.wuffs.ifly.blocks.AscensionShardBlockEntity.fallTimeCalc;
 import static dev.wuffs.ifly.blocks.AscensionShardBlockEntity.getDistanceToGround;
 
-public class AscensionShardBlock extends Block implements EntityBlock {
+public class AscensionShardBlock extends Block {
 
     public AscensionShardBlock() {
         super(Properties.of().strength(0.4f, 3600000.0F).sound(SoundType.STONE).noOcclusion());
     }
 
-    @Nullable
-    @Override
-    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
-        return new AscensionShardBlockEntity(blockPos, blockState);
-    }
+//    @Nullable
+//    @Override
+//    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+//        return new AscensionShardBlockEntity(blockPos, blockState);
+//    }
 
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> blockEntityType) {
-        return level.isClientSide() ? null : AscensionShardBlockEntity::ticker;
-    }
+//    @Nullable
+//    @Override
+//    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> blockEntityType) {
+//        return level.isClientSide() ? null : AscensionShardBlockEntity::ticker;
+//    }
+
+//    @Override
+//    public void setPlacedBy(Level level, BlockPos blockPos, BlockState blockState, @Nullable LivingEntity livingEntity, ItemStack itemStack) {
+//        super.setPlacedBy(level, blockPos, blockState, livingEntity, itemStack);
+//        if (level.isClientSide) {
+//            return;
+//        }
+//
+//        if (livingEntity instanceof Player) {
+//            BlockEntity blockEntity = level.getBlockEntity(blockPos);
+//            if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
+//                ascensionShardBlockEntity.storedPlayers.add(new StoredPlayers(((Player) livingEntity).getGameProfile(), PlayerLevel.OWNER));
+//                ascensionShardBlockEntity.setChanged();
+//            }
+//        }
+//    }
+
 
     @Override
-    public void setPlacedBy(Level level, BlockPos blockPos, BlockState blockState, @Nullable LivingEntity livingEntity, ItemStack itemStack) {
-        super.setPlacedBy(level, blockPos, blockState, livingEntity, itemStack);
+    @SuppressWarnings("deprecation")
+    public void onPlace(BlockState blockState, Level level, BlockPos blockPos, BlockState blockState2, boolean bl) {
+        super.onPlace(blockState, level, blockPos, blockState2, bl);
         if (level.isClientSide) {
             return;
         }
 
-        if (livingEntity instanceof Player) {
-            BlockEntity blockEntity = level.getBlockEntity(blockPos);
-            if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
-                ascensionShardBlockEntity.storedPlayers.add(new StoredPlayers(((Player) livingEntity).getGameProfile(), PlayerLevel.OWNER));
-                ascensionShardBlockEntity.setChanged();
-            }
-        }
+        FlightManager.INSTANCE.handleBlockPlaced(level, blockPos, blockState);
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void onRemove(BlockState blockState, Level level, BlockPos blockPos, BlockState blockState2, boolean bl) {
         if (level.isClientSide) {
             super.onRemove(blockState, level, blockPos, blockState2, bl);
             return;
         }
-        BlockEntity blockEntity = level.getBlockEntity(blockPos);
-        if (blockEntity instanceof AscensionShardBlockEntity) {
-            for (UUID playerUUID : AscensionShardBlockEntity.weMadeFlying) {
-                Player player = level.getPlayerByUUID(playerUUID);
-                if (player != null) {
-                    String playerIflyTag = "ifly:" + blockPos.toShortString();
-                    if (player.getTags().contains(playerIflyTag)) {
-                        AscensionShardBlockEntity.weMadeFlying.remove(playerUUID);
-                        boolean wasFlying = player.getAbilities().flying;
-                        player.getAbilities().flying = false;
-                        player.getAbilities().mayfly = false;
-                        player.removeTag("ifly:" + blockPos.toShortString());
-                        double distanceToGround = getDistanceToGround(player);
-                        if (distanceToGround >= 4 && wasFlying) {
-                            int timeToFall = fallTimeCalc((int) Math.ceil(distanceToGround));
-                            player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, timeToFall));
-                        }
-                        player.onUpdateAbilities();
-                    }
-                }
-            }
-        }
+
+        FlightManager.INSTANCE.handleBlockBroken(level, blockPos, blockState);
+
+//        BlockEntity blockEntity = level.getBlockEntity(blockPos);
+//        if (blockEntity instanceof AscensionShardBlockEntity) {
+//            for (UUID playerUUID : AscensionShardBlockEntity.weMadeFlying) {
+//                Player player = level.getPlayerByUUID(playerUUID);
+//                if (player != null) {
+//                    String playerIflyTag = "ifly:" + blockPos.toShortString();
+//                    if (player.getTags().contains(playerIflyTag)) {
+//                        AscensionShardBlockEntity.weMadeFlying.remove(playerUUID);
+//                        boolean wasFlying = player.getAbilities().flying;
+//                        player.getAbilities().flying = false;
+//                        player.getAbilities().mayfly = false;
+//                        player.removeTag("ifly:" + blockPos.toShortString());
+//                        double distanceToGround = getDistanceToGround(player);
+//                        if (distanceToGround >= 4 && wasFlying) {
+//                            int timeToFall = fallTimeCalc((int) Math.ceil(distanceToGround));
+//                            player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, timeToFall));
+//                        }
+//                        player.onUpdateAbilities();
+//                    }
+//                }
+//            }
+//        }
         super.onRemove(blockState, level, blockPos, blockState2, bl);
     }
 
+    // TODO: GUI!
     @Override
     public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
         if(level.isClientSide){

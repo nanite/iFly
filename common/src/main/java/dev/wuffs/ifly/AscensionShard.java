@@ -5,12 +5,14 @@ import dev.architectury.event.events.client.ClientLifecycleEvent;
 import dev.architectury.event.events.common.BlockEvent;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.PlayerEvent;
+import dev.architectury.event.events.common.TickEvent;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import dev.wuffs.ifly.blocks.Blocks;
 import dev.wuffs.ifly.client.AscensionShardClient;
 import dev.wuffs.ifly.common.BlockEventListener;
 import dev.wuffs.ifly.common.PlayerEventListener;
+import dev.wuffs.ifly.flight.FlightManager;
 import dev.wuffs.ifly.items.Items;
 import dev.wuffs.ifly.network.Network;
 import net.minecraft.commands.CommandBuildContext;
@@ -36,6 +38,8 @@ public class AscensionShard {
 
         PlayerEvent.PLAYER_QUIT.register(PlayerEventListener::onPlayerQuitEvent);
         BlockEvent.BREAK.register(BlockEventListener::onBlockBreakEvent);
+
+        TickEvent.Server.SERVER_POST.register(FlightManager.INSTANCE::tick);
     }
 
     private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection selection) {
