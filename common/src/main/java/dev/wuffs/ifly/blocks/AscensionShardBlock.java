@@ -1,34 +1,23 @@
 package dev.wuffs.ifly.blocks;
 
-import dev.wuffs.ifly.common.PlayerLevel;
 import dev.wuffs.ifly.flight.FlightManager;
 import dev.wuffs.ifly.network.C2SOpenIflyScreen;
 import dev.wuffs.ifly.network.Network;
-import dev.wuffs.ifly.network.records.StoredPlayers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.UUID;
-
-import static dev.wuffs.ifly.blocks.AscensionShardBlockEntity.fallTimeCalc;
-import static dev.wuffs.ifly.blocks.AscensionShardBlockEntity.getDistanceToGround;
 
 public class AscensionShardBlock extends Block implements EntityBlock {
 
@@ -40,40 +29,6 @@ public class AscensionShardBlock extends Block implements EntityBlock {
     @Override
     public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
         return new AscensionShardBlockEntity(blockPos, blockState);
-    }
-
-//    @Nullable
-//    @Override
-//    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState blockState, BlockEntityType<T> blockEntityType) {
-//        return level.isClientSide() ? null : AscensionShardBlockEntity::ticker;
-//    }
-
-//    @Override
-//    public void setPlacedBy(Level level, BlockPos blockPos, BlockState blockState, @Nullable LivingEntity livingEntity, ItemStack itemStack) {
-//        super.setPlacedBy(level, blockPos, blockState, livingEntity, itemStack);
-//        if (level.isClientSide) {
-//            return;
-//        }
-//
-//        if (livingEntity instanceof Player) {
-//            BlockEntity blockEntity = level.getBlockEntity(blockPos);
-//            if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
-//                ascensionShardBlockEntity.storedPlayers.add(new StoredPlayers(((Player) livingEntity).getGameProfile(), PlayerLevel.OWNER));
-//                ascensionShardBlockEntity.setChanged();
-//            }
-//        }
-//    }
-
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void onPlace(BlockState blockState, Level level, BlockPos blockPos, BlockState blockState2, boolean bl) {
-        super.onPlace(blockState, level, blockPos, blockState2, bl);
-        if (level.isClientSide) {
-            return;
-        }
-
-        FlightManager.INSTANCE.handleBlockPlaced(level, blockPos, blockState);
     }
 
     @Override
@@ -124,5 +79,34 @@ public class AscensionShardBlock extends Block implements EntityBlock {
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    public static class AscensionShardBlockItem extends BlockItem {
+        public AscensionShardBlockItem(Block block) {
+            super(block, new Properties());
+        }
+
+        @Override
+        protected boolean placeBlock(BlockPlaceContext blockPlaceContext, BlockState blockState) {
+            if (blockPlaceContext.getLevel().isClientSide) {
+                return super.placeBlock(blockPlaceContext, blockState);
+            }
+
+            var result = super.placeBlock(blockPlaceContext, blockState);
+            if (result) {
+                // Check if the block placed is an AscensionShardBlock
+                var level = blockPlaceContext.getLevel();
+                var blockAtPos = level.getBlockState(blockPlaceContext.getClickedPos());
+
+                if (!blockAtPos.is(this.getBlock())) {
+                    return true; // It's good but we just can't do anything with it
+                }
+
+                // Right cool, set the tile up for this player to be the owner
+                FlightManager.INSTANCE.handleBlockPlaced(level, blockPlaceContext.getClickedPos(), blockState, blockPlaceContext.getPlayer());
+            }
+
+            return result;
+        }
     }
 }

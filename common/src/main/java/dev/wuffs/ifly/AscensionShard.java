@@ -13,6 +13,7 @@ import dev.wuffs.ifly.client.AscensionShardClient;
 import dev.wuffs.ifly.common.BlockEventListener;
 import dev.wuffs.ifly.common.PlayerEventListener;
 import dev.wuffs.ifly.flight.FlightManager;
+import dev.wuffs.ifly.integration.ModIntegrations;
 import dev.wuffs.ifly.items.Items;
 import dev.wuffs.ifly.network.Network;
 import net.minecraft.commands.CommandBuildContext;
@@ -28,6 +29,8 @@ public class AscensionShard {
     public static final String MOD_ID = "ifly";
 
     public AscensionShard(){
+        ModIntegrations.init();
+
         CommandRegistrationEvent.EVENT.register(this::registerCommands);
         Blocks.BLOCKS.register();
         Blocks.BLOCKENTITY.register();

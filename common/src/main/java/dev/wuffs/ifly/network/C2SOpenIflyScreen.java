@@ -2,6 +2,7 @@ package dev.wuffs.ifly.network;
 
 import dev.architectury.networking.NetworkManager;
 import dev.wuffs.ifly.blocks.AscensionShardBlockEntity;
+import dev.wuffs.ifly.flight.FlightManager;
 import dev.wuffs.ifly.network.records.AvailablePlayer;
 import dev.wuffs.ifly.network.records.StoredPlayers;
 import net.minecraft.ChatFormatting;
@@ -36,18 +37,23 @@ public class C2SOpenIflyScreen{
     public void apply(Supplier<NetworkManager.PacketContext> contextSupplier) {
         // On receive
         contextSupplier.get().queue(() -> {
-            BlockEntity blockEntity = contextSupplier.get().getPlayer().level().getBlockEntity(blockPos);
-            if (blockEntity instanceof AscensionShardBlockEntity ascensionShardBlockEntity) {
-                List<StoredPlayers> storedPlayers = ascensionShardBlockEntity.storedPlayers;
-                Player player = contextSupplier.get().getPlayer();
-                boolean isPlayerOwner = storedPlayers.stream().anyMatch(storedPlayer -> storedPlayer.player().getId().equals(player.getUUID()) && storedPlayer.level().isManagerOrGreater());
-                if (!isPlayerOwner) {
-                    player.displayClientMessage(Component.literal("You are not the owner/manager of this block!").withStyle(ChatFormatting.RED), true);
-                    return;
-                }
-                List<AvailablePlayer> availablePlayers = contextSupplier.get().getPlayer().level().players().stream().map(player1 -> new AvailablePlayer(player1.getGameProfile())).toList();
-                Network.CHANNEL.sendToPlayer((ServerPlayer) player, new S2COpenIflyScreen(blockPos, storedPlayers, availablePlayers));
+            var volume = FlightManager.INSTANCE.getVolume(blockPos);
+
+            if (volume == null) {
+                // What?! How did we get here?
+                return;
             }
+
+            Player player = contextSupplier.get().getPlayer();
+            if (!volume.playerCanManage(player)) {
+                player.displayClientMessage(Component.literal("You are not the owner/manager of this block!").withStyle(ChatFormatting.RED), true);
+                return;
+            }
+
+            List<AvailablePlayer> availablePlayers = contextSupplier.get().getPlayer().level().players().stream().map(player1 -> new AvailablePlayer(player1.getGameProfile())).toList();
+            List<FlightManager.FlightAccess> members = volume.members();
+
+            Network.CHANNEL.sendToPlayer((ServerPlayer) player, new S2COpenIflyScreen(blockPos, members, availablePlayers));
         });
     }
 }

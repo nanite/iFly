@@ -3,6 +3,7 @@ package dev.wuffs.ifly.network;
 import dev.architectury.networking.NetworkManager;
 import dev.wuffs.ifly.client.gui.screen.AscensionShardScreen;
 import dev.wuffs.ifly.common.PlayerLevel;
+import dev.wuffs.ifly.flight.FlightManager;
 import dev.wuffs.ifly.network.records.AvailablePlayer;
 import dev.wuffs.ifly.network.records.StoredPlayers;
 import net.minecraft.core.BlockPos;
@@ -14,12 +15,10 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 public class S2COpenIflyScreen {
-
     BlockPos blockPos;
-    List<StoredPlayers> storedPlayers;
     List<AvailablePlayer> availablePlayers;
-//    List<> availableTeams;
-    UUID ownerUUID;
+    List<FlightManager.FlightAccess> members;
+
     public S2COpenIflyScreen(FriendlyByteBuf buf) {
         // Decode data into a message
         List<StoredPlayers> sp = new ArrayList<>();
@@ -39,7 +38,7 @@ public class S2COpenIflyScreen {
 
     }
 
-    public S2COpenIflyScreen(BlockPos blockPos, List<StoredPlayers> storedPlayers, List<AvailablePlayer> availablePlayers) {
+    public S2COpenIflyScreen(BlockPos blockPos, List<FlightManager.FlightAccess> members, List<AvailablePlayer> availablePlayers) {
         // Message creation
         this.blockPos = blockPos;
         this.storedPlayers = storedPlayers;

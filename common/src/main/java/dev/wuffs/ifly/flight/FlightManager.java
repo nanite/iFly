@@ -1,8 +1,11 @@
 package dev.wuffs.ifly.flight;
 
 import dev.wuffs.ifly.blocks.AscensionShardBlock;
+import dev.wuffs.ifly.integration.ModIntegrations;
+import dev.wuffs.ifly.integration.TeamsInterface;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceKey;
@@ -12,33 +15,27 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
+// TODO: We need to actually save this data
 public enum FlightManager {
     INSTANCE;
+
+    private static final int CHECK_INTERVAL = 20 * 5; // 5 seconds
 
     // TODO: Fix removing of blocks from the flight blocks.
     private final Map<ResourceKey<Level>, List<BlockPos>> flightBlocks = new HashMap<>();
 
-    // TODO: Technically we don't need to write this whole object as it's trivial to create using the source location.
-    private final List<Bounds> flightAreas = new ArrayList<>();
+    private final List<FlightBounds> flightAreas = new ArrayList<>();
 
     // Track who we've given flight to so we can tell them to fuck off later
     private final List<UUID> playersWithFlight = new ArrayList<>();
 
-    // TODO: this list should be bounce to a volume so they can only fly in volumes they have access to.
-    private final List<UUID> allowedToFly = new ArrayList<>();
-
-    private final List<BlockPos> sourceVolumes = new ArrayList<>();
-
-    // TODO: Use or yeet
-    private Map<UUID, Player> playerLookupCache = new HashMap<>();
-
-    // Need some kinda way of binding the source volume to the flight areas
+    private final Object2BooleanMap<UUID> playersKnownByVolumes = new Object2BooleanOpenHashMap<>();
 
     FlightManager() {
 
@@ -50,13 +47,29 @@ public enum FlightManager {
      */
     public void tick(MinecraftServer server) {
         // TL;DR: Allowed to fly? If no, no fly
-        validateSourceVolumes(server);
+        if (server.getTickCount() % CHECK_INTERVAL == 0) { // Run every 1 second
+            validateSourceVolumes(server);
+        }
+
         ensureFlight(server);
     }
 
     private void validateSourceVolumes(MinecraftServer server) {
-        for (BlockPos sourceVolume : this.sourceVolumes) {
-            // SHIT
+        for (Map.Entry<ResourceKey<Level>, List<BlockPos>> blocks : this.flightBlocks.entrySet()) {
+            // Check if the block still exists, if it doen't call the remove method to clean things up
+            // Try and get the dim
+            var dimKey = blocks.getKey();
+            var dim = server.getLevel(dimKey);
+            if (dim == null) {
+                continue;
+            }
+
+            for (BlockPos pos : blocks.getValue()) {
+                var state = dim.getBlockState(pos);
+                if (state.isAir() || !(state.getBlock() instanceof AscensionShardBlock)) {
+                    this.handleBlockBroken(dim, pos, state);
+                }
+            }
         }
     }
 
@@ -64,15 +77,16 @@ public enum FlightManager {
         var players = server.getPlayerList().getPlayers();
 
         for (var player : players) {
-            var uuid = player.getUUID();
-
-            var allowedToFly = this.allowedToFly.contains(uuid);
-            if (!allowedToFly) {
-                return;
-            }
-
             var wasInVolume = false;
             for (var volume : this.flightAreas) {
+                // This will only be looked up if we do not already know the result. This reduces the amount of times
+                // we have to walk to though a members list. Doing it this way also allows us to have team support without
+                // any extra work.
+                var knownToVolume = playersKnownByVolumes.computeIfAbsent(player.getUUID(), uuid -> volume.playerCanFly(player));
+                if (!knownToVolume) {
+                    continue;
+                }
+
                 if (volume.isWithin(player.blockPosition())) {
                     this.ensureFlightForPlayer(player);
                     wasInVolume = true;
@@ -127,20 +141,15 @@ public enum FlightManager {
         player.onUpdateAbilities();
     }
 
-    public void handleBlockPlaced(Level level, BlockPos pos, BlockState state) {
+    public void handleBlockPlaced(Level level, BlockPos pos, BlockState state, Player player) {
         if (state.isAir() || !(state.getBlock() instanceof AscensionShardBlock)) {
             return;
         }
 
-        // Hack
-        // TODO: FIX ME
-        List<ServerPlayer> players = level.getServer().getPlayerList().getPlayers();
-        for (ServerPlayer player : players) {
-            this.allowedToFly.add(player.getUUID());
-        }
+        // Assign the player as the owner of this block, then add them to the fly list
 
         this.flightBlocks.computeIfAbsent(level.dimension(), k -> new ArrayList<>()).add(pos);
-        this.addVolume(pos);
+        this.addVolume(player.getUUID(), pos);
     }
 
     public void handleBlockBroken(Level level, BlockPos pos, BlockState state) {
@@ -167,29 +176,38 @@ public enum FlightManager {
             }
         }
 
-        this.flightBlocks.remove(pos);
+        blockPos.remove(pos);
+        // Write the blockPos back to the map
+        this.flightBlocks.put(level.dimension(), blockPos);
         this.removeVolume(pos); // This will try and remove any volumes that are using this block as a source
+
+        // Purge the cache so it can be recalculated later
+        this.playersKnownByVolumes.clear();
     }
 
     /**
      * Haha
      */
-    private void addVolume(BlockPos location) {
-        this.addVolume(location, 64);
+    private void addVolume(UUID owner, BlockPos location) {
+        this.addVolume(owner, location, 64);
     }
 
-    private void addVolume(BlockPos location, int size) {
-        var bounds = Bounds.create(location, location, size);
+    private void addVolume(UUID owner, BlockPos location, int size) {
+        var bounds = FlightBounds.create(owner, location, location, size);
         this.flightAreas.add(bounds);
-        this.sourceVolumes.add(location);
     }
 
     private void removeVolume(BlockPos sourceLocation) {
         // Find the volume using it's sourceLocation
         var volume = this.flightAreas.stream().filter(bounds -> bounds.sourceLocation.equals(sourceLocation)).findFirst();
-        volume.ifPresent(this.flightAreas::remove);
+        volume.ifPresent(v -> {
+            this.flightAreas.remove(v);
+        });
+    }
 
-        this.sourceVolumes.remove(sourceLocation);
+    @Nullable
+    public FlightBounds getVolume(BlockPos sourceLocation) {
+        return this.flightAreas.stream().filter(bounds -> bounds.sourceLocation.equals(sourceLocation)).findFirst().orElse(null);
     }
 
     public CompoundTag writeToCompound() {
@@ -197,10 +215,8 @@ public enum FlightManager {
 
         compound.put("flightBlocks", writeCompoundMap(this.flightBlocks, (key) -> StringTag.valueOf(key.location().toString()), t -> writeCompoundList(t, NbtUtils::writeBlockPos)));
 
-        compound.put("flightAreas", writeCompoundList(this.flightAreas, Bounds::writeToCompound));
-        compound.put("sourceVolumes", writeCompoundList(this.sourceVolumes, NbtUtils::writeBlockPos));
+        compound.put("flightAreas", writeCompoundList(this.flightAreas, FlightBounds::writeToCompound));
         compound.put("playersWithFlight", writeCompoundList(this.playersWithFlight, NbtUtils::createUUID));
-        compound.put("allowedToFly", writeCompoundList(this.allowedToFly, NbtUtils::createUUID));
 
         return compound;
     }
@@ -208,19 +224,15 @@ public enum FlightManager {
     public void readFromCompound(CompoundTag tag) {
         this.flightBlocks.clear();
         this.flightAreas.clear();
-        this.sourceVolumes.clear();
         this.playersWithFlight.clear();
-        this.allowedToFly.clear();
 
         this.flightBlocks.putAll(readCompoundMap(tag.getList("flightBlocks", Tag.TAG_COMPOUND),
                 t -> ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("k"))),
                 t -> readCompoundList((ListTag) t, NbtUtils::readBlockPos)
         ));
 
-        this.flightAreas.addAll(readCompoundList(tag.getList("flightAreas", Tag.TAG_COMPOUND), Bounds::readFromCompound));
-        this.sourceVolumes.addAll(readCompoundList(tag.getList("sourceVolumes", Tag.TAG_COMPOUND), NbtUtils::readBlockPos));
+        this.flightAreas.addAll(readCompoundList(tag.getList("flightAreas", Tag.TAG_COMPOUND), FlightBounds::readFromCompound));
         this.playersWithFlight.addAll(readCompoundList(tag.getList("playersWithFlight", Tag.TAG_INT_ARRAY), NbtUtils::loadUUID));
-        this.allowedToFly.addAll(readCompoundList(tag.getList("allowedToFly", Tag.TAG_INT_ARRAY), NbtUtils::loadUUID));
     }
 
     //#region NBT Utils
@@ -255,7 +267,6 @@ public enum FlightManager {
             compound.put("v", valueWriter.apply(entry.getValue()));
             listTag.add(compound);
         }
-
         return listTag;
     }
 
@@ -281,34 +292,30 @@ public enum FlightManager {
      * @param endX
      * @param endZ
      */
-    record Bounds(
+    public record FlightBounds(
             BlockPos sourceLocation,
+            UUID owner,
+            List<FlightAccess> members,
             int startX,
             int startZ,
             int endX,
             int endZ
     ) {
-        public static Bounds create(BlockPos sourceLocation, BlockPos startPos, BlockPos endPos) {
-            return new Bounds(sourceLocation, startPos.getX(), startPos.getZ(), endPos.getX(), endPos.getZ());
-        }
-
-        public static Bounds create(BlockPos sourceLocation, Vec3 startPos, Vec3 endPos) {
-            return new Bounds(sourceLocation, (int) startPos.x, (int) startPos.z, (int) endPos.x, (int) endPos.z);
-        }
-
-        public static Bounds create(BlockPos sourceLocation, Vec3i startPos, Vec3i endPos) {
-            return new Bounds(sourceLocation, startPos.getX(), startPos.getZ(), endPos.getX(), endPos.getZ());
-        }
-
-        public static Bounds create(BlockPos sourceLocation, BlockPos pos, int expandBy) {
-            return new Bounds(sourceLocation, pos.getX() - expandBy, pos.getZ() - expandBy, pos.getX() + expandBy, pos.getZ() + expandBy);
+        public static FlightBounds create(UUID owner, BlockPos sourceLocation, BlockPos pos, int expandBy) {
+            return new FlightBounds(sourceLocation,
+                    owner,
+                    new ArrayList<>(),
+                    pos.getX() - expandBy,
+                    pos.getZ() - expandBy,
+                    pos.getX() + expandBy,
+                    pos.getZ() + expandBy);
         }
 
         /**
          * Wow, such performance, much wow
          *
-         * @param pos
-         * @return
+         * @param pos the position to check
+         * @return boolean if the position is within the bounds
          */
         public boolean isWithin(BlockPos pos) {
             int givenX = pos.getX();
@@ -317,10 +324,48 @@ public enum FlightManager {
             return givenX > this.startX && givenX < this.endX && givenZ > this.startZ && givenZ < this.endZ;
         }
 
+        public boolean playerCanFly(Player player) {
+            if (this.owner.equals(player.getUUID())) {
+                return true;
+            }
+
+            // Check if the player is a member
+            if (this.members.isEmpty()) {
+                return false;
+            }
+
+            return this.members.stream().anyMatch(member -> member.canFly(player));
+        }
+
+        public boolean playerCanManage(Player player) {
+            if (this.owner.equals(player.getUUID())) {
+                return true;
+            }
+
+            // Check if the player is a member
+            if (this.members.isEmpty()) {
+                return false;
+            }
+
+            return this.members.stream().anyMatch(member -> member.canManage(player));
+        }
+
         public CompoundTag writeToCompound() {
             var compound = new CompoundTag();
 
             compound.put("sourceLocation", NbtUtils.writeBlockPos(this.sourceLocation));
+            compound.put("owner", NbtUtils.createUUID(this.owner));
+            compound.put("members", writeCompoundList(this.members, (member) -> {
+                if (member instanceof FlightTeam) {
+                    CompoundTag compoundTag = ((FlightTeam) member).writeToCompound();
+                    compoundTag.putString("type", "team");
+                    return compoundTag;
+                }
+
+                CompoundTag compoundTag = ((FlightMembers) member).writeToCompound();
+                compoundTag.putString("type", "member");
+                return compoundTag;
+            }));
             compound.putInt("startX", this.startX);
             compound.putInt("startZ", this.startZ);
             compound.putInt("endX", this.endX);
@@ -329,14 +374,118 @@ public enum FlightManager {
             return compound;
         }
 
-        public static Bounds readFromCompound(CompoundTag tag) {
+        public static FlightBounds readFromCompound(CompoundTag tag) {
             var sourceLocation = NbtUtils.readBlockPos(tag.getCompound("sourceLocation"));
+            var owner = NbtUtils.loadUUID(tag.get("owner"));
+
+            var members = readCompoundList(tag.getList("members", Tag.TAG_COMPOUND), (t) -> {
+                var type = t.getString("type");
+                if (type.equals("team")) {
+                    return FlightTeam.readFromCompound(t);
+                }
+
+                return FlightMembers.readFromCompound(t);
+            });
+
             var startX = tag.getInt("startX");
             var startZ = tag.getInt("startZ");
             var endX = tag.getInt("endX");
             var endZ = tag.getInt("endZ");
 
-            return new Bounds(sourceLocation, startX, startZ, endX, endZ);
+            return new FlightBounds(sourceLocation, owner, members, startX, startZ, endX, endZ);
+        }
+    }
+
+    enum Role {
+        OWNER,
+        MANAGER,
+        MEMBER;
+
+        public String id() {
+            return this.name().toLowerCase();
+        }
+    }
+
+    public interface FlightAccess {
+        boolean canFly(Player player);
+
+        boolean canManage(Player player);
+    }
+
+    public static class FlightTeam implements FlightAccess {
+        // Lazy lookup
+        private final Supplier<TeamsInterface> teamsLookup = () -> ModIntegrations.factory(this.providerId);
+
+        UUID teamId;
+        ResourceLocation providerId;
+
+        public FlightTeam(UUID teamId, ResourceLocation providerId) {
+            this.teamId = teamId;
+            this.providerId = providerId;
+        }
+
+        @Override
+        public boolean canFly(Player player) {
+            TeamsInterface teamsInterface = this.teamsLookup.get();
+            if (teamsInterface == null) {
+                return false;
+            }
+
+            return teamsInterface.isInTeam(player, this.teamId);
+        }
+
+        @Override
+        public boolean canManage(Player player) {
+            TeamsInterface teamsInterface = this.teamsLookup.get();
+            if (teamsInterface == null) {
+                return false;
+            }
+
+            return teamsInterface.isManager(player, this.teamId);
+        }
+
+        public CompoundTag writeToCompound() {
+            var compound = new CompoundTag();
+
+            compound.put("teamId", NbtUtils.createUUID(this.teamId));
+            compound.putString("providerId", this.providerId.toString());
+
+            return compound;
+        }
+
+        public static FlightTeam readFromCompound(CompoundTag tag) {
+            var teamId = NbtUtils.loadUUID(tag.get("teamId"));
+            var providerId = new ResourceLocation(tag.getString("providerId"));
+
+            return new FlightTeam(teamId, providerId);
+        }
+    }
+
+    record FlightMembers(UUID player, Role role) implements FlightAccess {
+        public CompoundTag writeToCompound() {
+            var compound = new CompoundTag();
+
+            compound.put("player", NbtUtils.createUUID(this.player));
+            compound.putString("role", this.role.id());
+
+            return compound;
+        }
+
+        public static FlightMembers readFromCompound(CompoundTag tag) {
+            var player = NbtUtils.loadUUID(tag.get("player"));
+            var role = Role.valueOf(tag.getString("role").toUpperCase());
+
+            return new FlightMembers(player, role);
+        }
+
+        @Override
+        public boolean canFly(Player player) {
+            return player.getUUID().equals(this.player);
+        }
+
+        @Override
+        public boolean canManage(Player player) {
+            return this.role == Role.MANAGER || this.role == Role.OWNER;
         }
     }
 }

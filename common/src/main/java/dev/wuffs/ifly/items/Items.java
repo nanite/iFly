@@ -3,6 +3,7 @@ package dev.wuffs.ifly.items;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import dev.wuffs.ifly.AscensionShard;
+import dev.wuffs.ifly.blocks.AscensionShardBlock;
 import dev.wuffs.ifly.blocks.Blocks;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
@@ -18,5 +19,5 @@ public class Items {
         return ITEMS.register(id, () -> new BlockItem(b.get(), new Item.Properties()));
     }
 
-    public static final RegistrySupplier<Item> BUNDLE = blockItem("ascension_shard", Blocks.ASHARD);
+    public static final RegistrySupplier<Item> BUNDLE = ITEMS.register("ascension_shard", () -> new AscensionShardBlock.AscensionShardBlockItem(Blocks.ASHARD.get()));
 }
