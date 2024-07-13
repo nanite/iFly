@@ -1,5 +1,7 @@
 package dev.wuffs.ifly.blocks;
 
+import dev.architectury.networking.NetworkManager;
+import dev.ftb.mods.ftblibrary.util.NetworkHelper;
 import dev.wuffs.ifly.flight.FlightManager;
 import dev.wuffs.ifly.network.C2SOpenIflyScreen;
 import dev.wuffs.ifly.network.Network;
@@ -66,11 +68,11 @@ public class AscensionShardBlock extends Block implements EntityBlock {
         super.onRemove(blockState, level, blockPos, blockState2, bl);
     }
 
-    // TODO: GUI!
+
     @Override
-    public InteractionResult use(BlockState blockState, Level level, BlockPos blockPos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
+    protected InteractionResult useWithoutItem(BlockState blockState, Level level, BlockPos blockPos, Player player, BlockHitResult blockHitResult) {
         if(level.isClientSide){
-            Network.CHANNEL.sendToServer(new C2SOpenIflyScreen(blockPos));
+            NetworkManager.sendToServer(new C2SOpenIflyScreen(blockPos));
             return InteractionResult.CONSUME;
         }
         return InteractionResult.PASS;

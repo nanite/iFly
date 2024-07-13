@@ -3,8 +3,13 @@ package dev.wuffs.ifly.common;
 import com.mojang.serialization.Codec;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.Icons;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.animal.Cod;
 
 import java.util.Optional;
 
@@ -15,6 +20,9 @@ public enum PlayerLevel implements StringRepresentable {
     REMOVE("remove", 0);
 
     public static final Codec<PlayerLevel> CODEC = StringRepresentable.fromEnum(PlayerLevel::values);
+
+    //TODO FIX THIS
+    public static final StreamCodec<ByteBuf, PlayerLevel> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
 
     private final String name;
     private final int power;

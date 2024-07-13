@@ -1,11 +1,13 @@
 package dev.wuffs.ifly.client.gui.screen;
 
 import com.mojang.authlib.GameProfile;
+import dev.architectury.networking.NetworkManager;
 import dev.ftb.mods.ftblibrary.icon.FaceIcon;
 import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.*;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftblibrary.ui.misc.NordColors;
+import dev.ftb.mods.ftblibrary.util.NetworkHelper;
 import dev.ftb.mods.ftblibrary.util.TooltipList;
 import dev.wuffs.ifly.common.PlayerLevel;
 import dev.wuffs.ifly.network.C2SGUIInteract;
@@ -72,7 +74,7 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
             @Override
             public void onClicked(MouseButton button) {
                 if(Screen.hasControlDown() && Screen.hasShiftDown()){
-                    Network.CHANNEL.sendToServer(new C2SDebugScreen());
+                    NetworkManager.sendToServer(new C2SDebugScreen());
                 }
             }
         });
@@ -141,7 +143,7 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
                         if (currentP.level().isManagerOrGreater()){
                             if(currentP.level().isOwner()){
                                 contextMenuItems.add(new ContextMenuItem(Component.literal("Make owner"), Icons.DIAMOND, (b) -> {
-                                    Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.OWNER));
+                                    NetworkManager.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.OWNER));
                                     storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
                                     // Remove the current owner from the list and add them back as a normal user
                                     GameProfile currentOwner = storedPlayers.stream().filter(storedPlayer -> storedPlayer.level().isOwner()).findFirst().get().player();
@@ -155,20 +157,20 @@ public class AscensionShardScreen extends BaseScreen implements NordColors {
 
                             if (!targetPlayer.level().isManagerOrGreater()){
                                 contextMenuItems.add(new ContextMenuItem(Component.literal("Make manger"), Icons.SHIELD, (b) -> {
-                                    Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.MANAGER));
+                                    NetworkManager.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.MANAGER));
                                     storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
                                     storedPlayers.add(new StoredPlayers(profile, PlayerLevel.MANAGER));
                                 }));
                             } else if (targetPlayer.level().isManagerOrGreater() && !targetPlayer.level().isOwner()){
                                 contextMenuItems.add(new ContextMenuItem(Component.literal("Make member"), Icons.ACCEPT_GRAY, (b) -> {
-                                    Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.MEMBER));
+                                    NetworkManager.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.MEMBER));
                                     storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
                                     storedPlayers.add(new StoredPlayers(profile, PlayerLevel.MEMBER));
                                 }));
 
                             }
                             contextMenuItems.add(new ContextMenuItem(Component.literal("Remove"), Icons.CLOSE, (b) -> {
-                                Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.REMOVE));
+                                NetworkManager.sendToServer(new C2SGUIInteract(blockPos, profile, PlayerLevel.REMOVE));
                                 storedPlayers.removeIf(storedPlayer -> storedPlayer.player().getId().equals(profile.getId()));
                                 AscensionShardScreen.this.refreshWidgets();
                             }));

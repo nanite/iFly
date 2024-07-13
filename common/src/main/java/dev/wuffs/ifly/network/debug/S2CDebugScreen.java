@@ -1,57 +1,42 @@
 package dev.wuffs.ifly.network.debug;
 
+import com.mojang.authlib.GameProfile;
 import dev.architectury.networking.NetworkManager;
+import dev.wuffs.ifly.AscensionShard;
 import dev.wuffs.ifly.blocks.AscensionShardBlockEntity;
 import dev.wuffs.ifly.client.gui.screen.DebugScreen;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class S2CDebugScreen {
-    ObjectSet<UUID> weMadeFlying;
-    ObjectSet<UUID> alreadyFlying;
-    public S2CDebugScreen(FriendlyByteBuf buf) {
-        ObjectSet<UUID> wf = new ObjectOpenHashSet<>();
-        ObjectSet<UUID> af = new ObjectOpenHashSet<>();
-        int wfSize = buf.readInt();
-        int afSize = buf.readInt();
+public record S2CDebugScreen(ObjectSet<UUID> weMadeFlying, ObjectSet<UUID> alreadyFlying) implements CustomPacketPayload {
 
-        for (int i = 0; i < wfSize; i++) {
-            wf.add(buf.readUUID());
-        }
-        for (int i = 0; i < afSize; i++) {
-            af.add(buf.readUUID());
-        }
-        weMadeFlying = wf;
-        alreadyFlying = af;
+    public static final Type<S2CDebugScreen> TYPE = new Type<>(AscensionShard.rl("debug_screen_s2c"));
 
-    }
+    public static final StreamCodec<FriendlyByteBuf, S2CDebugScreen> STREAM_CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.collection(ObjectOpenHashSet::new)), S2CDebugScreen::weMadeFlying,
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.collection(ObjectOpenHashSet::new)), S2CDebugScreen::alreadyFlying,
+            S2CDebugScreen::new
+    );
 
-    public S2CDebugScreen() {
-        this.weMadeFlying = AscensionShardBlockEntity.weMadeFlying;
-        this.alreadyFlying = AscensionShardBlockEntity.alreadyFlying;
-    }
 
-    public void encode(FriendlyByteBuf buf) {
-        buf.writeInt(weMadeFlying.size());
-        buf.writeInt(alreadyFlying.size());
-        for (UUID uuid : weMadeFlying) {
-            // Encode data into the buf
-            buf.writeUUID(uuid);
-        }
-        for (UUID uuid : alreadyFlying) {
-            // Encode data into the buf
-            buf.writeUUID(uuid);
-        }
-    }
-
-    public void apply(Supplier<NetworkManager.PacketContext> contextSupplier) {
+    public static void handle(S2CDebugScreen packet, NetworkManager.PacketContext contextSupplier) {
         // On receive
-        contextSupplier.get().queue(() -> {
-            new DebugScreen(weMadeFlying, alreadyFlying).openGui();
+        contextSupplier.queue(() -> {
+            new DebugScreen(packet.weMadeFlying, packet.alreadyFlying).openGui();
         });
+    }
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

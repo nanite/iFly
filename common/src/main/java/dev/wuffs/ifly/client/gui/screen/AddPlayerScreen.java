@@ -1,11 +1,13 @@
 package dev.wuffs.ifly.client.gui.screen;
 
 import com.mojang.authlib.GameProfile;
+import dev.architectury.networking.NetworkManager;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.Icons;
 import dev.ftb.mods.ftblibrary.ui.*;
 import dev.ftb.mods.ftblibrary.ui.input.MouseButton;
 import dev.ftb.mods.ftblibrary.ui.misc.NordColors;
+import dev.ftb.mods.ftblibrary.util.NetworkHelper;
 import dev.wuffs.ifly.common.PlayerLevel;
 import dev.wuffs.ifly.network.C2SGUIInteract;
 import dev.wuffs.ifly.network.Network;
@@ -64,7 +66,7 @@ public class AddPlayerScreen extends BaseScreen implements NordColors, IAddPlaye
         add(executeButton = new ExecuteButton(Component.literal("Add"), Icons.ADD, () -> {
             // Player Stuff
             for (GameProfile invite : playerInvites) {
-                Network.CHANNEL.sendToServer(new C2SGUIInteract(blockPos, invite, PlayerLevel.MEMBER));
+                NetworkManager.sendToServer(new C2SGUIInteract(blockPos, invite, PlayerLevel.MEMBER));
                 storedPlayers.add(new StoredPlayers(invite, PlayerLevel.MEMBER));
             }
             // Team Stuff
