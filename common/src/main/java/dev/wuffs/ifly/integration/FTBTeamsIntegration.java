@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class FTBTeamsIntegration implements TeamsInterface {
-    public static final ResourceLocation ID = new ResourceLocation(AscensionShard.MOD_ID, "ftb_teams");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AscensionShard.MOD_ID, "ftb_teams");
 
     @Override
     public ResourceLocation id() {

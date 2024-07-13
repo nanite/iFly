@@ -1,7 +1,6 @@
 package dev.wuffs.ifly.client;
 
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
-import dev.wuffs.ifly.blocks.ASBlockEntityRenderer;
 import dev.wuffs.ifly.blocks.Blocks;
 import dev.wuffs.ifly.client.renderer.AscensionShardEntityRenderer;
 import net.fabricmc.api.EnvType;

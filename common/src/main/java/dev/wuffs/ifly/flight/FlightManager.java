@@ -227,7 +227,7 @@ public enum FlightManager {
         this.playersWithFlight.clear();
 
         this.flightBlocks.putAll(readCompoundMap(tag.getList("flightBlocks", Tag.TAG_COMPOUND),
-                t -> ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("k"))),
+                t -> ResourceKey.create(Registries.DIMENSION, ResourceLocation.withDefaultNamespace(tag.getString("k"))),
                 t -> readCompoundList((ListTag) t, NbtUtils::readBlockPos)
         ));
 
@@ -455,7 +455,7 @@ public enum FlightManager {
 
         public static FlightTeam readFromCompound(CompoundTag tag) {
             var teamId = NbtUtils.loadUUID(tag.get("teamId"));
-            var providerId = new ResourceLocation(tag.getString("providerId"));
+            var providerId = ResourceLocation.withDefaultNamespace(tag.getString("providerId"));
 
             return new FlightTeam(teamId, providerId);
         }

@@ -23,7 +23,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import software.bernie.geckolib.GeckoLib;
 
 public class AscensionShard {
     public static final String MOD_ID = "ifly";
@@ -60,6 +59,6 @@ public class AscensionShard {
             .icon(() -> new ItemStack(Items.BUNDLE.get())).build());
 
     public void setup(){
-        GeckoLib.initialize();
+//        GeckoLib.initialize();
     }
 }

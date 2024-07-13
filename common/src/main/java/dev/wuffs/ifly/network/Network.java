@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 
 public class Network {
 
-    public static final NetworkChannel CHANNEL = NetworkChannel.create(new ResourceLocation(AscensionShard.MOD_ID, "networking_channel"));
+    public static final NetworkChannel CHANNEL = NetworkChannel.create(ResourceLocation.fromNamespaceAndPath(AscensionShard.MOD_ID, "networking_channel"));
     public static void register() {
         CHANNEL.register(C2SOpenIflyScreen.class, C2SOpenIflyScreen::encode, C2SOpenIflyScreen::new, C2SOpenIflyScreen::apply);
         CHANNEL.register(S2COpenIflyScreen.class, S2COpenIflyScreen::encode, S2COpenIflyScreen::new, S2COpenIflyScreen::apply);

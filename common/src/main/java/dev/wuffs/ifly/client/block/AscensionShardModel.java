@@ -7,6 +7,6 @@ import software.bernie.geckolib.model.DefaultedBlockGeoModel;
 
 public class AscensionShardModel extends DefaultedBlockGeoModel<AscensionShardBlockEntity> {
     public AscensionShardModel() {
-        super(new ResourceLocation(AscensionShard.MOD_ID,"ascension_shard"));
+        super(ResourceLocation.fromNamespaceAndPath(AscensionShard.MOD_ID,"ascension_shard"));
     }
 }

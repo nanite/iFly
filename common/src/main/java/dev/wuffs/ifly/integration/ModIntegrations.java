@@ -15,9 +15,9 @@ public class ModIntegrations {
             PROVIDERS.add(new FTBTeamsIntegration());
         }
 
-        if (Platform.isModLoaded("cadmus")) {
-            PROVIDERS.add(new CadmusIntegration());
-        }
+//        if (Platform.isModLoaded("cadmus")) {
+//            PROVIDERS.add(new CadmusIntegration());
+//        }
 
         PROVIDERS.add(new VanillaTeamsIntegration());
     }

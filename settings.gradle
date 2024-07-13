@@ -1,9 +1,8 @@
 pluginManagement {
     repositories {
+        maven { url "https://maven.wuffs.dev/repository/Minecraft/" }
         maven { url "https://maven.fabricmc.net/" }
-        maven { url "https://maven.neomc.dev/" }
         maven { url "https://maven.architectury.dev/" }
-        maven { url "https://maven.minecraftforge.net/" }
         gradlePluginPortal()
     }
 }

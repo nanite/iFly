@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[1,)"
+loaderVersion = "[2,)"
 #issueTrackerURL = ""
 license = "All rights reserved"
 
@@ -16,20 +16,27 @@ Adds a block that grants creative flight within its range **WORK IN PROGRESS**
 [[dependencies.ifly]]
 modId = "neoforge"
 required = true
-versionRange = "[1,)"
+versionRange = "[2,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.ifly]]
 modId = "minecraft"
 required = true
-versionRange = "[1.20.4,)"
+versionRange = "[1.21,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.ifly]]
 modId = "architectury"
 required = true
-versionRange = "[11.1.0,)"
+versionRange = "[13.0.4,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.ifly]]
+modId = "resourcefullib"
+required = true
+versionRange = "[3.0.9,)"
 ordering = "AFTER"
 side = "BOTH"

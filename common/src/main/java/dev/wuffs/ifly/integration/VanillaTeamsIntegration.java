@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class VanillaTeamsIntegration implements TeamsInterface {
-    private static final ResourceLocation ID = new ResourceLocation(AscensionShard.MOD_ID, "vanilla");
+    private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(AscensionShard.MOD_ID, "vanilla");
 
     @Override
     public ResourceLocation id() {
@@ -29,5 +29,10 @@ public class VanillaTeamsIntegration implements TeamsInterface {
     @Override
     public List<AvailableTeam> getAvailableTeams() {
         return null;
+    }
+
+    @Override
+    public boolean isManager(Player player, UUID teamId) {
+        return false;
     }
 }
