@@ -3,6 +3,7 @@ package dev.wuffs.ifly.common;
 import com.mojang.serialization.Codec;
 import dev.ftb.mods.ftblibrary.icon.Icon;
 import dev.ftb.mods.ftblibrary.icon.Icons;
+import dev.wuffs.ifly.flight.FlightManager;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -13,6 +14,9 @@ import net.minecraft.world.entity.animal.Cod;
 
 import java.util.Optional;
 
+/**
+ * @deprecated Use {@link FlightManager.Role} instead
+ */
 public enum PlayerLevel implements StringRepresentable {
     OWNER("owner", 100, Icons.DIAMOND),
     MANAGER("manager", 50, Icons.SHIELD),

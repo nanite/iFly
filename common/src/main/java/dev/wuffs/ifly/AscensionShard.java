@@ -42,7 +42,7 @@ public class AscensionShard {
         PlayerEvent.PLAYER_QUIT.register(PlayerEventListener::onPlayerQuitEvent);
         BlockEvent.BREAK.register(BlockEventListener::onBlockBreakEvent);
 
-        TickEvent.Server.SERVER_POST.register(FlightManager.INSTANCE::tick);
+        TickEvent.Server.SERVER_LEVEL_POST.register(FlightManager::LevelTick);
     }
 
     private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection selection) {
@@ -59,7 +59,7 @@ public class AscensionShard {
                     })
             .icon(() -> new ItemStack(Items.BUNDLE.get())).build());
 
-    public void setup(){
+    public void setup() {
 //        GeckoLib.initialize();
     }
 

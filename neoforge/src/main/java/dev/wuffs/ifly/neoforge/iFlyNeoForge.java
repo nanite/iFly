@@ -11,7 +11,9 @@ import software.bernie.geckolib.GeckoLib;
 public class iFlyNeoForge {
     public iFlyNeoForge(IEventBus modEventBus) {
 //        GeckoLib.initialize(modEventBus);
-        new AscensionShard();
+        AscensionShard ascensionShard = new AscensionShard();
+        ascensionShard.setup();
+
         modEventBus.addListener(this::clientSetup);
     }
 

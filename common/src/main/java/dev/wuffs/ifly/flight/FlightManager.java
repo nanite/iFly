@@ -6,15 +6,19 @@ import dev.wuffs.ifly.integration.TeamsInterface;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.saveddata.SavedData;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -22,59 +26,64 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 // TODO: We need to actually save this data
-public enum FlightManager {
-    INSTANCE;
+public class FlightManager extends SavedData {
 
     private static final int CHECK_INTERVAL = 20 * 5; // 5 seconds
 
-    // TODO: Fix removing of blocks from the flight blocks.
     private final Map<ResourceKey<Level>, List<BlockPos>> flightBlocks = new HashMap<>();
 
     private final List<FlightBounds> flightAreas = new ArrayList<>();
-
-    // Track who we've given flight to so we can tell them to fuck off later
     private final List<UUID> playersWithFlight = new ArrayList<>();
 
+    // Not saved data
     private final Object2BooleanMap<UUID> playersKnownByVolumes = new Object2BooleanOpenHashMap<>();
 
-    FlightManager() {
+    public static FlightManager get(ServerLevel level) {
+        return level.getDataStorage().computeIfAbsent(new SavedData.Factory<>(
+                FlightManager::new,
+                FlightManager::readFromCompound,
+                null
+        ), "ifly_flight_manager");
+    }
 
+    FlightManager() {
+    }
+
+    @Override
+    public @NotNull CompoundTag save(CompoundTag compoundTag, HolderLookup.Provider provider) {
+        return writeToCompound(compoundTag);
     }
 
     /**
      *
      * @param server
      */
-    public void tick(MinecraftServer server) {
+    public void tick(ServerLevel level) {
         // TL;DR: Allowed to fly? If no, no fly
-        if (server.getTickCount() % CHECK_INTERVAL == 0) { // Run every 1 second
-            validateSourceVolumes(server);
+        if (level.getServer().getTickCount() % CHECK_INTERVAL == 0) { // Run every 1 second
+            validateSourceVolumes(level);
         }
 
-        ensureFlight(server);
+        ensureFlight(level);
     }
 
-    private void validateSourceVolumes(MinecraftServer server) {
+    private void validateSourceVolumes(ServerLevel level) {
         for (Map.Entry<ResourceKey<Level>, List<BlockPos>> blocks : this.flightBlocks.entrySet()) {
             // Check if the block still exists, if it doen't call the remove method to clean things up
             // Try and get the dim
             var dimKey = blocks.getKey();
-            var dim = server.getLevel(dimKey);
-            if (dim == null) {
-                continue;
-            }
 
             for (BlockPos pos : blocks.getValue()) {
-                var state = dim.getBlockState(pos);
+                var state = level.getBlockState(pos);
                 if (state.isAir() || !(state.getBlock() instanceof AscensionShardBlock)) {
-                    this.handleBlockBroken(dim, pos, state);
+                    this.handleBlockBroken(level, pos, state);
                 }
             }
         }
     }
 
-    private void ensureFlight(MinecraftServer server) {
-        var players = server.getPlayerList().getPlayers();
+    private void ensureFlight(ServerLevel level) {
+        var players = level.getServer().getPlayerList().getPlayers();
 
         for (var player : players) {
             var wasInVolume = false;
@@ -101,6 +110,7 @@ public enum FlightManager {
 
     private void ensureFlightForPlayer(ServerPlayer player) {
         // First! Can they fly? If they can, abort
+        // TODO: Attributes
         if (player.getAbilities().mayfly || player.getAbilities().flying) {
             // This typically means we did not make them fly or we've made them fly and they don't need to have it turned off
             return;
@@ -109,6 +119,7 @@ public enum FlightManager {
         this.switchFlight(player, true);
     }
 
+    // TODO: Attribnutes
     private void removeFlightForPlayer(ServerPlayer player) {
         // First, check if they can fly, if they can't abort early
         if (!player.getAbilities().mayfly) {
@@ -125,6 +136,11 @@ public enum FlightManager {
         this.switchFlight(player, false);
     }
 
+    /**
+     * TODO: Attributes
+     * @param player
+     * @param on
+     */
     private void switchFlight(Player player, boolean on) {
         if (player.isCreative() || player.isSpectator()) {
             return;
@@ -135,6 +151,8 @@ public enum FlightManager {
         } else {
             this.playersWithFlight.remove(player.getUUID());
         }
+
+        this.setDirty();
 
         player.getAbilities().flying = on;
         player.getAbilities().mayfly = on;
@@ -159,8 +177,8 @@ public enum FlightManager {
         }
 
         // If the block wasn't in the list, we don't care
-        List<BlockPos> blockPos = this.flightBlocks.get(level.dimension());
-        if (blockPos == null || !blockPos.contains(pos)) {
+        List<BlockPos> blockPosList = this.flightBlocks.get(level.dimension());
+        if (blockPosList == null || !blockPosList.contains(pos)) {
             return;
         }
 
@@ -176,13 +194,14 @@ public enum FlightManager {
             }
         }
 
-        blockPos.remove(pos);
+        blockPosList.remove(pos);
         // Write the blockPos back to the map
-        this.flightBlocks.put(level.dimension(), blockPos);
+        this.flightBlocks.put(level.dimension(), blockPosList);
         this.removeVolume(pos); // This will try and remove any volumes that are using this block as a source
 
         // Purge the cache so it can be recalculated later
         this.playersKnownByVolumes.clear();
+        this.setDirty();
     }
 
     /**
@@ -195,14 +214,14 @@ public enum FlightManager {
     private void addVolume(UUID owner, BlockPos location, int size) {
         var bounds = FlightBounds.create(owner, location, location, size);
         this.flightAreas.add(bounds);
+        this.setDirty();
     }
 
     private void removeVolume(BlockPos sourceLocation) {
         // Find the volume using it's sourceLocation
         var volume = this.flightAreas.stream().filter(bounds -> bounds.sourceLocation.equals(sourceLocation)).findFirst();
-        volume.ifPresent(v -> {
-            this.flightAreas.remove(v);
-        });
+        volume.ifPresent(this.flightAreas::remove);
+        this.setDirty();
     }
 
     @Nullable
@@ -210,10 +229,12 @@ public enum FlightManager {
         return this.flightAreas.stream().filter(bounds -> bounds.sourceLocation.equals(sourceLocation)).findFirst().orElse(null);
     }
 
-    public CompoundTag writeToCompound() {
-        var compound = new CompoundTag();
-
-        compound.put("flightBlocks", writeCompoundMap(this.flightBlocks, (key) -> StringTag.valueOf(key.location().toString()), t -> writeCompoundList(t, NbtUtils::writeBlockPos)));
+    public CompoundTag writeToCompound(CompoundTag compound) {
+        compound.put("flightBlocks", writeCompoundMap(this.flightBlocks, (key) -> StringTag.valueOf(key.location().toString()), t -> writeCompoundList(t, pos -> {
+            var compoundTag = new CompoundTag();
+            compoundTag.put("blockPos", NbtUtils.writeBlockPos(pos));
+            return compoundTag;
+        })));
 
         compound.put("flightAreas", writeCompoundList(this.flightAreas, FlightBounds::writeToCompound));
         compound.put("playersWithFlight", writeCompoundList(this.playersWithFlight, NbtUtils::createUUID));
@@ -221,18 +242,22 @@ public enum FlightManager {
         return compound;
     }
 
-    public void readFromCompound(CompoundTag tag) {
-        this.flightBlocks.clear();
-        this.flightAreas.clear();
-        this.playersWithFlight.clear();
+    public static FlightManager readFromCompound(CompoundTag tag, HolderLookup.Provider provider) {
+        var manager = new FlightManager();
 
-        this.flightBlocks.putAll(readCompoundMap(tag.getList("flightBlocks", Tag.TAG_COMPOUND),
+        manager.flightBlocks.clear();
+        manager.flightAreas.clear();
+        manager.playersWithFlight.clear();
+
+        manager.flightBlocks.putAll(readCompoundMap(tag.getList("flightBlocks", Tag.TAG_COMPOUND),
                 t -> ResourceKey.create(Registries.DIMENSION, ResourceLocation.withDefaultNamespace(tag.getString("k"))),
-                t -> readCompoundList((ListTag) t, NbtUtils::readBlockPos)
+                t -> readCompoundList((ListTag) t, compoundTag -> NbtUtils.readBlockPos(compoundTag, "blockPos").orElse(BlockPos.ZERO))
         ));
 
-        this.flightAreas.addAll(readCompoundList(tag.getList("flightAreas", Tag.TAG_COMPOUND), FlightBounds::readFromCompound));
-        this.playersWithFlight.addAll(readCompoundList(tag.getList("playersWithFlight", Tag.TAG_INT_ARRAY), NbtUtils::loadUUID));
+        manager.flightAreas.addAll(readCompoundList(tag.getList("flightAreas", Tag.TAG_COMPOUND), FlightBounds::readFromCompound));
+        manager.playersWithFlight.addAll(readCompoundList(tag.getList("playersWithFlight", Tag.TAG_INT_ARRAY), NbtUtils::loadUUID));
+
+        return manager;
     }
 
     //#region NBT Utils
@@ -282,6 +307,11 @@ public enum FlightManager {
 
         return result;
     }
+
+    public static void LevelTick(ServerLevel serverLevel) {
+        FlightManager.get(serverLevel).tick(serverLevel);
+    }
+
     //#endregion
 
     /**
@@ -353,7 +383,9 @@ public enum FlightManager {
         public CompoundTag writeToCompound() {
             var compound = new CompoundTag();
 
-            compound.put("sourceLocation", NbtUtils.writeBlockPos(this.sourceLocation));
+            var blockPos = new CompoundTag();
+            blockPos.put("blockPos", NbtUtils.writeBlockPos(this.sourceLocation));
+            compound.put("sourceLocation", blockPos);
             compound.put("owner", NbtUtils.createUUID(this.owner));
             compound.put("members", writeCompoundList(this.members, (member) -> {
                 if (member instanceof FlightTeam) {
@@ -375,7 +407,7 @@ public enum FlightManager {
         }
 
         public static FlightBounds readFromCompound(CompoundTag tag) {
-            var sourceLocation = NbtUtils.readBlockPos(tag.getCompound("sourceLocation"));
+            var sourceLocation = NbtUtils.readBlockPos(tag.getCompound("sourceLocation"), "blockPos").orElse(BlockPos.ZERO);
             var owner = NbtUtils.loadUUID(tag.get("owner"));
 
             var members = readCompoundList(tag.getList("members", Tag.TAG_COMPOUND), (t) -> {
@@ -396,7 +428,7 @@ public enum FlightManager {
         }
     }
 
-    enum Role {
+    public enum Role {
         OWNER,
         MANAGER,
         MEMBER;

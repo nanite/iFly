@@ -47,7 +47,7 @@ public class TempCommands {
 
                     if (blockEntity instanceof AscensionShardBlockEntity) {
                         // Use the block pos to lookup the volume data in the flight manager
-                        FlightManager.FlightBounds volume = FlightManager.INSTANCE.getVolume(blockPos);
+                        FlightManager.FlightBounds volume = FlightManager.get(context.getSource().getLevel()).getVolume(blockPos);
                         if (volume != null) {
                             context.getSource().sendSuccess(() -> Component.literal("Flight volume data"), false);
                             CompoundTag volumeData = volume.writeToCompound();

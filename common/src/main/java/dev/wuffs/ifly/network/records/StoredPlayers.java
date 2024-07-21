@@ -12,6 +12,9 @@ import net.minecraft.util.ExtraCodecs;
 
 import java.util.List;
 
+/**
+ * @deprecated {@link dev.wuffs.ifly.flight.FlightManager}
+ */
 public record StoredPlayers(
         GameProfile player,
         PlayerLevel level

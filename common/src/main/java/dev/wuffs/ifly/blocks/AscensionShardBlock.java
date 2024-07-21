@@ -6,6 +6,7 @@ import dev.wuffs.ifly.flight.FlightManager;
 import dev.wuffs.ifly.network.C2SOpenIflyScreen;
 import dev.wuffs.ifly.network.Network;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -41,7 +42,7 @@ public class AscensionShardBlock extends Block implements EntityBlock {
             return;
         }
 
-        FlightManager.INSTANCE.handleBlockBroken(level, blockPos, blockState);
+        FlightManager.get((ServerLevel) level).handleBlockBroken(level, blockPos, blockState);
 
 //        BlockEntity blockEntity = level.getBlockEntity(blockPos);
 //        if (blockEntity instanceof AscensionShardBlockEntity) {
@@ -105,7 +106,7 @@ public class AscensionShardBlock extends Block implements EntityBlock {
                 }
 
                 // Right cool, set the tile up for this player to be the owner
-                FlightManager.INSTANCE.handleBlockPlaced(level, blockPlaceContext.getClickedPos(), blockState, blockPlaceContext.getPlayer());
+                FlightManager.get((ServerLevel) blockPlaceContext.getLevel()).handleBlockPlaced(level, blockPlaceContext.getClickedPos(), blockState, blockPlaceContext.getPlayer());
             }
 
             return result;

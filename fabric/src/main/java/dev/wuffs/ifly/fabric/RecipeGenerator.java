@@ -4,13 +4,17 @@ import dev.wuffs.ifly.AscensionShard;
 import dev.wuffs.ifly.blocks.Blocks;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.data.recipes.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 
+import java.util.concurrent.CompletableFuture;
+
 public class RecipeGenerator extends FabricRecipeProvider {
-    public RecipeGenerator(FabricDataOutput output) {
-        super(output);
+
+    public RecipeGenerator(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
+        super(output, registriesFuture);
     }
 
     @Override
@@ -26,6 +30,6 @@ public class RecipeGenerator extends FabricRecipeProvider {
                 .define('E', Items.ELYTRA)
                 .define('O', Items.OBSIDIAN)
                 .define('N', Items.NETHERITE_INGOT)
-                .save(exporter, new ResourceLocation(AscensionShard.MOD_ID, "ascension_shard"));
+                .save(exporter, ResourceLocation.fromNamespaceAndPath(AscensionShard.MOD_ID, "ascension_shard"));
     }
 }
